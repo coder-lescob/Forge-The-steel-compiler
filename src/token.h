@@ -10,8 +10,8 @@ typedef enum {
 
 // The structure of a token
 typedef struct {
-    TokenType type  ;
-    char      word[];
+    TokenType type;
+    char     *word;
 } Token;
 
 /*
