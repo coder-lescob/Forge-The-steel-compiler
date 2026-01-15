@@ -1,6 +1,8 @@
+// std libs
 #include <stdio.h>
 #include <string.h>
 
+// project
 #include "token.h"
 
 #define STR_LEN 100
