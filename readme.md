@@ -1,6 +1,6 @@
-# *Forge* - The steel compiler
+# **Forge** - The steel compiler
 
-This is the current version (0.0.0.1) of **forge the steel compiler**. 
+This is the current version (0.0.0.1) of **forge - the steel compiler**. 
 
 ## The old C++ version
 
