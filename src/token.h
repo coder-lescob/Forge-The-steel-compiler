@@ -5,6 +5,8 @@
 typedef enum {
     TOKEN_ILLEGAL,
     TOKEN_BLANK,
+    TOKEN_ID,
+    TOKEN_TEST,
     TOKEN_EOF
 } TokenType;
 

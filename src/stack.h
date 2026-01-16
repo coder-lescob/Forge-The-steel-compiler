@@ -15,7 +15,7 @@ typedef struct {
 * @param type     The type of each item of the stack
 * @returns A stack, don't forget to free it with FreeStack
 */
-#define CreateStack(capcity, type) \
+#define CreateStack(capacity, type) \
     (Stack) { \
         .data = calloc(capacity, sizeof(type)), \
         .ptr = 0, .size = capacity, .isize = sizeof(type) \
@@ -38,7 +38,7 @@ typedef struct {
 * @param type  The item type, please don't lie.
 */
 #define Push(stack, item, type) \
-    if (sizeof(type) == sizeof(item) && stack.ptr < stack.capacity) \
+    if (sizeof(type) == sizeof(item) && sizeof(item) == stack.isize && stack.ptr < stack.size) \
         ((type *)stack.data)[stack.ptr++] = item
 
 /*
@@ -49,7 +49,7 @@ typedef struct {
 * @returns The item poped.
 */
 #define PopLast(stack, type) \
-    (sizeof(type) * stack.capacity == stack.isize * stack.capacity && stack.ptr > 0)? \
+    (sizeof(type) * stack.size == stack.isize * stack.size && stack.ptr > 0)? \
         ((type *)stack.data)[--stack.ptr] \
         : 0 // 0 per default
 

@@ -1,9 +1,11 @@
 // std libs
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 // project
 #include "token.h"
+#include "lexer.h"
 
 #define STR_LEN 100
 
@@ -12,14 +14,17 @@ int main(void) {
     char str[STR_LEN + 1]; // + the 0 terminator
     fgets(str, STR_LEN, stdin);
 
-    // remove the new line character
-    if (str[strlen(str) - 1] == '\n') {
-        str[strlen(str) - 1] = 0;
+    // tokenize the string
+    Token *tokens = Tokenize(str);
+
+    // print all of them
+    for (Token *token = tokens; token->type != TOKEN_EOF; token++) {
+        if (token->word) {
+            printf("Token %s of type %d\n", token->word, token->type);
+
+            free(token->word);
+        }
     }
 
-    // create a token to hold it
-    Token token = {.type = ClassifyToken(str), .word = str};
-
-    // print it
-    printf("token %s of type %d\n", token.word, token.type);
+    free(tokens);
 }
