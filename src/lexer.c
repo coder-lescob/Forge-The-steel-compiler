@@ -64,8 +64,7 @@ static void AddToken(Stack *tokens, char *word, TokenType type) {
 
     // clear the buffer if there is any
     if (word) {
-        word[0] = 0;
-        word[1] = 0;
+        memset(word, 0, BUFFER_SIZE);
     }
 }
 
