@@ -1,6 +1,8 @@
+// project
 #include "preproc.h"
 #include "stack.h"
 
+// std
 #include <string.h>
 
 static PreProcStatmentType GetPreProcType(TokenType type) {
@@ -76,9 +78,7 @@ static Stack GetPreProcStatments(Token *tokens) {
 }
 
 static void FreeStatment(PreProcStatment statment) {
-    //printf("%d\n", statment.type);
     for (size_t i = 0; i < statment.numtokens; i++) {
-        //printf("%s\n", statment.tokens[i].word);
         // free each string of each token
         free(statment.tokens[i].word);
     }
@@ -109,7 +109,7 @@ static void HandleToken(PreProcStatment *statment, Token *token) {
     }
 }
 
-static void Substitut(PreProcStatment *statment, Token *tokens) {
+static void Process(PreProcStatment *statment, Token *tokens) {
     
     // loop over each token
     for (Token *token = tokens; token->type != TOKEN_EOF; token++) {
@@ -126,7 +126,7 @@ void PreProccess(Token *tokens) {
         PreProcStatment s = ((PreProcStatment *)statments.data)[i];
 
         // do substition
-        Substitut(&s, tokens);
+        Process(&s, tokens);
 
         // free every ressources
         FreeStatment(s);
