@@ -27,7 +27,7 @@ static int isid(char *str) {
 TokenType ClassifyToken(char *str) {
     if (!str) return TOKEN_ILLEGAL;
 
-    if (strlen(str) == 1 && (str[0] == ' ' || str[0] == '\n' || str[0] == '\t'))
+    if (strlen(str) == 1 && (str[0] == ' ' || str[0] == '\t'))
         // blank tokens
         return TOKEN_BLANK;
 
@@ -36,7 +36,9 @@ TokenType ClassifyToken(char *str) {
     */
 
     static Token staticTokens[] = {
-        {TOKEN_TEST, "test"}
+        {TOKEN_DOLLAR, "$"},
+        {TOKEN_NWLINE, "\n"},
+        {TOKEN_PREPROC_ALIAS, "alias"}
     };
 
     for (size_t i = 0; i < (sizeof(staticTokens) / sizeof(Token)); i++) {

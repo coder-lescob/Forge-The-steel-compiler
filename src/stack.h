@@ -6,7 +6,7 @@
 // the stack structure
 typedef struct {
     void *data;
-    long ptr, size, isize;
+    size_t ptr, size, isize;
 } Stack;
 
 /*

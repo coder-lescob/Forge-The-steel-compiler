@@ -5,8 +5,17 @@
 typedef enum {
     TOKEN_ILLEGAL,
     TOKEN_BLANK,
+
+    // identifier
     TOKEN_ID,
-    TOKEN_TEST,
+    
+    // symboles
+    TOKEN_DOLLAR,
+    TOKEN_NWLINE,
+
+    // preproc
+    TOKEN_PREPROC_ALIAS,
+
     TOKEN_EOF
 } TokenType;
 

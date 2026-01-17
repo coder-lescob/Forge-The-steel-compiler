@@ -1,8 +1,21 @@
 #ifndef HEADER_PREPROC
 #define HEADER_PREPROC
 
+// std libs
+#include <stdlib.h>
+
 // project
 #include "token.h"
+
+typedef enum {
+    PREPROC_ALIAS
+} PreProcStatmentType;
+
+typedef struct {
+    PreProcStatmentType type;
+    Token *tokens;
+    size_t numtokens;
+} PreProcStatment;
 
 /*
 * Pre-process the string of tokens.
