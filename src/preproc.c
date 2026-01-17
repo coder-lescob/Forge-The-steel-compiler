@@ -9,7 +9,7 @@ static PreProcStatmentType GetPreProcType(TokenType type) {
         case TOKEN_PREPROC_ALIAS: return PREPROC_ALIAS;
 
         default:
-            printf("Illegal preprocessing statment.");
+            printf("Illegal preprocessing statment.\n");
             break;
     }
     exit(-1);
@@ -39,10 +39,13 @@ static Stack GetPreProcStatments(Token *tokens) {
             // count how many token is it to the next line
             size_t oldIdx = i, size;
             for (
-                size = 1, i++ /* skip dollar */; 
+                size = 0; 
                 tokens[i].type != TOKEN_NWLINE && tokens[i].type != TOKEN_EOF; 
                 i++, size++
             );
+
+            // skip new line char
+            if (tokens[i].type == TOKEN_NWLINE) i++, size++;
 
             // create the proproc statment
             PreProcStatment statment = {
@@ -73,7 +76,9 @@ static Stack GetPreProcStatments(Token *tokens) {
 }
 
 static void FreeStatment(PreProcStatment statment) {
+    //printf("%d\n", statment.type);
     for (size_t i = 0; i < statment.numtokens; i++) {
+        //printf("%s\n", statment.tokens[i].word);
         // free each string of each token
         free(statment.tokens[i].word);
     }
@@ -82,14 +87,46 @@ static void FreeStatment(PreProcStatment statment) {
     free(statment.tokens);
 }
 
+static void HandleToken(PreProcStatment *statment, Token *token) {
+
+    // handle differently in function of the type of statment
+    switch (statment->type) {
+        case PREPROC_ALIAS:
+            if (tokcmp(statment->tokens + 2, token)) {
+                // swap 3 token with the current token
+                // free the previous token
+                free(token->word);
+
+                // copy the token over
+                token->word = calloc(strlen(statment->tokens[3].word) + 1, sizeof(char));
+                memcpy(token->word, statment->tokens[3].word, strlen(statment->tokens[3].word));
+                token->type = statment->tokens[3].type;
+            }
+            break;
+        default:
+            // do nothing    
+            break;
+    }
+}
+
+static void Substitut(PreProcStatment *statment, Token *tokens) {
+    
+    // loop over each token
+    for (Token *token = tokens; token->type != TOKEN_EOF; token++) {
+        HandleToken(statment, token);
+    }
+}
+
 void PreProccess(Token *tokens) {
     // get the statments
     Stack statments = GetPreProcStatments(tokens);
 
+    // for each statment
     for (size_t i = 0; i < statments.ptr; i++) {
         PreProcStatment s = ((PreProcStatment *)statments.data)[i];
 
         // do substition
+        Substitut(&s, tokens);
 
         // free every ressources
         FreeStatment(s);

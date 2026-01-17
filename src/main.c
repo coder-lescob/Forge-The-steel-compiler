@@ -13,9 +13,7 @@ static size_t flen(FILE *fptr) {
     for (char c = 0; (c = fgetc(fptr)) != EOF; size++);
     fseek(fptr, 0, SEEK_SET);
 
-    if (size > 0) size++;
-
-    return size;
+    return size + 1;
 }
 
 int main(int argc, char **argv) {
@@ -37,7 +35,7 @@ int main(int argc, char **argv) {
 
     // get a string from the user
     char *str = calloc(size + 1, sizeof(char)); // + the 0 terminator
-    fgets(str, size, fptr);
+    fread(str, sizeof(char), size, fptr);
 
     // tokenize the string
     Token *tokens = Tokenize(str);

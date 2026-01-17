@@ -32,4 +32,13 @@ typedef struct {
 */
 TokenType ClassifyToken(char *str);
 
+/*
+* Compare a and b.
+* If they match return 1
+* Otherwise return 0
+* @param a The first token.
+* @param b The second token.
+*/
+int tokcmp(Token *a, Token *b);
+
 #endif

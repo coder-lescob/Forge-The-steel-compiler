@@ -52,3 +52,9 @@ TokenType ClassifyToken(char *str) {
     // per default it's illegal token
     return TOKEN_ILLEGAL;
 }
+
+int tokcmp(Token *a, Token *b) {
+    // If their type doesn't match, they don't
+    if (a->type != b->type) return 0;
+    return strcmp(a->word, b->word) == 0;
+}
