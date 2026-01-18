@@ -40,6 +40,15 @@ typedef struct AST_Node {
 // The Abstract Syntax Tree representation in code
 typedef AST_Node *AST;
 
+// the steel syntax
+extern Syntax steelsyntax;
+
+/* Initialize the steel syntax */
+void InitSteelSyntax(void);
+
+/* Destroys the steel syntax */
+void DestroySteelSyntax(void);
+
 /*
 * Parses a list of token finishing by the end of file token using the syntax provided.
 * @param tokens The list of token ending in a token of type TOKEN_EOF
