@@ -57,14 +57,10 @@ static Stack GetPreProcStatments(Token *tokens) {
             };
 
             // copy tokens
-            for (size_t j = 0; j < statment.numtokens; j++) {
-                statment.tokens[j] = tokens[oldIdx + j];
-            }
+            memcpy(statment.tokens, tokens + oldIdx, statment.numtokens * sizeof(Token));
 
             // erase tokens
-            for (size_t j = oldIdx, k = i; tokens[j].type != TOKEN_EOF; j++, k++) {
-                tokens[j] = tokens[k];
-            }
+            memmove(tokens + oldIdx, tokens + i, (numtokens - i + 1) * sizeof(Token));
 
             // push it
             Push(statments, statment, PreProcStatment);
