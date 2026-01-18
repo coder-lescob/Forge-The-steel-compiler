@@ -7,11 +7,11 @@
 // project
 #include "token.h"
 
-typedef enum {
+typedef enum PPST {
     PREPROC_ALIAS
 } PreProcStatmentType;
 
-typedef struct {
+typedef struct PPS {
     PreProcStatmentType type;
     Token *tokens;
     size_t numtokens;

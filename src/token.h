@@ -2,7 +2,7 @@
 #define HEADER_TOKEN
 
 // The type of a token
-typedef enum {
+typedef enum TokenType {
     TOKEN_ILLEGAL,
     TOKEN_BLANK,
 
@@ -20,7 +20,7 @@ typedef enum {
 } TokenType;
 
 // The structure of a token
-typedef struct {
+typedef struct Token {
     TokenType type;
     char     *word;
 } Token;

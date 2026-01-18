@@ -4,7 +4,7 @@
 #include <malloc.h>
 
 // the stack structure
-typedef struct {
+typedef struct Stack {
     void *data;
     size_t ptr, size, isize;
 } Stack;
