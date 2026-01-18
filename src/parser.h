@@ -14,7 +14,7 @@ typedef struct SyntaxNode {
     size_t     symbol;
 
     // The array of next nodes
-    struct SyntaxNode *nextNodes;
+    struct SyntaxNode **nextNodes;
     size_t     numnext;
 } SyntaxNode;
 

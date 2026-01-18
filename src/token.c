@@ -23,6 +23,17 @@ static int isid(char *str) {
     return 1;
 }
 
+static int isnum(char *str) {
+    // If the string is empty it is not a number
+    if (strlen(str) == 0) return 0;
+
+    for (size_t i = 0; i < strlen(str); i++) {
+        if (str[i] >= '0' && str[1] <= '9') continue;
+        return 0;
+    }
+    return 1;
+}
+
 // implements Classify token
 TokenType ClassifyToken(char *str) {
     if (!str) return TOKEN_ILLEGAL;
@@ -47,7 +58,8 @@ TokenType ClassifyToken(char *str) {
         }
     }
 
-    if (isid(str)) return TOKEN_ID;
+    if (isnum(str)) return TOKEN_NUMBER;
+    if (isid(str))  return TOKEN_ID;
 
     // per default it's illegal token
     return TOKEN_ILLEGAL;

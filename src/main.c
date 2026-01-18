@@ -17,6 +17,15 @@ static size_t flen(FILE *fptr) {
     return size + 1;
 }
 
+static void PrintNode(AST_Node *node, size_t indent) {
+    for (size_t i = 0; i < indent; i++) printf("\t");
+    printf("node %s\n", node->token->word);
+
+    for (size_t i = 0; i < node->numnodes; i++) {
+        PrintNode(node->nextnodes[i], indent + 1);
+    }
+}
+
 int main(int argc, char **argv) {
     if (argc < 2) {
         printf("usage: %s <filename>\n", argv[0]);
@@ -56,6 +65,11 @@ int main(int argc, char **argv) {
     AST ast = Parse(tokens, &steelsyntax);
 
     DestroySteelSyntax();
+
+    if (ast)
+        PrintNode(ast, 0);
+    else
+        printf("Empty ast\n");
 
     for (Token *token = tokens; token->type != TOKEN_EOF; token++) {
         if (token->word) {

@@ -6,7 +6,7 @@ Syntax steelsyntax = {.numnodes = 0, .nodes = NULL, .numsymbols = 0, .symboltabl
 void InitSteelSyntax(void) {
     // constants
     #define NUM_SYMBOLS 1
-    #define NUM_NODES   1
+    #define NUM_NODES   3
 
     steelsyntax = (Syntax) {
         // allocates space
@@ -17,12 +17,22 @@ void InitSteelSyntax(void) {
         .numnodes = NUM_NODES
     };
 
-    steelsyntax.nodes[0]       = (SyntaxNode) {.tokentype = TOKEN_ID, .numnext = 0, .nextNodes = NULL};
+    steelsyntax.nodes[0]       = (SyntaxNode) {.tokentype = TOKEN_ID, .numnext = 2, .nextNodes = calloc(2, sizeof(SyntaxNode *))};
+    steelsyntax.nodes[0].nextNodes[0] = &steelsyntax.nodes[1];
+    steelsyntax.nodes[0].nextNodes[1] = &steelsyntax.nodes[2];
+    
+    steelsyntax.nodes[1]       = (SyntaxNode) {.tokentype = TOKEN_ID, .numnext = 0, .nextNodes = NULL};
+    steelsyntax.nodes[2]       = (SyntaxNode) {.tokentype = TOKEN_NUMBER, .numnext = 0, .nextNodes = NULL};
     steelsyntax.symboltable[0] = &steelsyntax.nodes[0];
 }
 
 void DestroySteelSyntax(void) {
     // free resources
+    for (size_t i = 0; i < steelsyntax.numnodes; i++) {
+        if (steelsyntax.nodes[i].nextNodes)
+            free(steelsyntax.nodes[i].nextNodes);
+    }
+
     free(steelsyntax.symboltable);
     free(steelsyntax.nodes);
 
@@ -52,7 +62,7 @@ static AST ParseNode(Token *token, SyntaxNode *syntaxnode) {
 
         // loop over each of the next nodes
         for (size_t i = 0; i < syntaxnode->numnext; i++) {
-            AST branch = ParseNode(token + 1, &syntaxnode->nextNodes[i]);
+            AST branch = ParseNode(token + 1, syntaxnode->nextNodes[i]);
             if (branch) {
                 node->nextnodes[node->numnodes++] = branch;
             }
@@ -64,6 +74,8 @@ static AST ParseNode(Token *token, SyntaxNode *syntaxnode) {
             return NULL;
         }
 
+        // node successful
+
         return node;
     }
     return NULL;
@@ -72,5 +84,6 @@ static AST ParseNode(Token *token, SyntaxNode *syntaxnode) {
 // parses a list of token using syntax
 AST Parse(Token *tokens, Syntax *syntax) {
     // Start seach from token 0 syntax node 0
-    return ParseNode(tokens, syntax->nodes);
+    AST ast = ParseNode(tokens, syntax->nodes);
+    return ast;
 }

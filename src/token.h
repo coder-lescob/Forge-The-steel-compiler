@@ -13,6 +13,9 @@ typedef enum TokenType {
     TOKEN_DOLLAR,
     TOKEN_NWLINE,
 
+    // litteral
+    TOKEN_NUMBER,
+
     // preproc
     TOKEN_PREPROC_ALIAS,
 
