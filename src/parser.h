@@ -14,7 +14,7 @@ typedef struct SyntaxNode {
     size_t     symbol;
 
     // The array of next nodes
-    SyntaxNode *nextNodes;
+    struct SyntaxNode *nextNodes;
     size_t     numnext;
 } SyntaxNode;
 
@@ -38,7 +38,7 @@ typedef struct AST_Node {
     Token    *token;
 
     // The next nodes of this node
-    AST_Node *nextnodes;
+    struct AST_Node **nextnodes;
     size_t   numnodes;
 } AST_Node;
 

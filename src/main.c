@@ -7,6 +7,7 @@
 #include "token.h"
 #include "lexer.h"
 #include "preproc.h"
+#include "parser.h"
 
 static size_t flen(FILE *fptr) {
     size_t size = 0;
@@ -47,7 +48,17 @@ int main(int argc, char **argv) {
     for (Token *token = tokens; token->type != TOKEN_EOF; token++) {
         if (token->word) {
             printf("Token %s of type %d\n", token->word, token->type);
+        }
+    }
 
+    InitSteelSyntax();
+
+    AST ast = Parse(tokens, &steelsyntax);
+
+    DestroySteelSyntax();
+
+    for (Token *token = tokens; token->type != TOKEN_EOF; token++) {
+        if (token->word) {
             free(token->word);
         }
     }
