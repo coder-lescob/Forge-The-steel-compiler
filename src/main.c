@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
     // call the pre-processor
     PreProccess(tokens.data);
 
-    // duplicates the 1st token
+    // creates a new token at the start
     Token tok = {.type = TOKEN_ID, .word = calloc(strlen("hello") + 1, sizeof(char))};
     memcpy(tok.word, "hello", strlen("hello"));
     Insert(&tokens, 0, &tok);
