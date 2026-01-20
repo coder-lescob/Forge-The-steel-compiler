@@ -76,14 +76,16 @@ static Stack GetPreProcStatments(Token *tokens) {
 static void FreeStatment(PreProcStatment statment) {
     for (size_t i = 0; i < statment.numtokens; i++) {
         // free each string of each token
-        free(statment.tokens[i].word);
+        if (statment.tokens[i].word)
+            free(statment.tokens[i].word);
     }
 
     // free the overall tokens
     free(statment.tokens);
 }
 
-static void HandleToken(PreProcStatment *statment, Token *token) {
+static void HandleToken(PreProcStatment *statment, Stack *tokens, size_t idx) {
+    Token *token = (Token *)tokens->data + idx;
 
     // handle differently in function of the type of statment
     switch (statment->type) {
@@ -97,6 +99,12 @@ static void HandleToken(PreProcStatment *statment, Token *token) {
                 token->word = calloc(strlen(statment->tokens[3].word) + 1, sizeof(char));
                 memcpy(token->word, statment->tokens[3].word, strlen(statment->tokens[3].word));
                 token->type = statment->tokens[3].type;
+
+                // insert all other tokens left
+                for (size_t i = 4; i < statment->numtokens; i++) {
+                    Insert(tokens, idx + i - 3, statment->tokens + i);
+                    statment->tokens[i].word = NULL;
+                }
             }
             break;
         default:
@@ -105,17 +113,17 @@ static void HandleToken(PreProcStatment *statment, Token *token) {
     }
 }
 
-static void Process(PreProcStatment *statment, Token *tokens) {
+static void Process(PreProcStatment *statment, Stack *tokens) {
     
     // loop over each token
-    for (Token *token = tokens; token->type != TOKEN_EOF; token++) {
-        HandleToken(statment, token);
+    for (size_t i = 0; ((Token *)tokens->data)[i].type != TOKEN_EOF; i++) {
+        HandleToken(statment, tokens, i);
     }
 }
 
-void PreProccess(Token *tokens) {
+void PreProccess(Stack *tokens) {
     // get the statments
-    Stack statments = GetPreProcStatments(tokens);
+    Stack statments = GetPreProcStatments(tokens->data);
 
     // for each statment
     for (size_t i = 0; i < statments.ptr; i++) {

@@ -6,6 +6,7 @@
 
 // project
 #include "token.h"
+#include "stack.h"
 
 typedef enum PPST {
     PREPROC_CONST
@@ -22,6 +23,6 @@ typedef struct PPS {
 * @param tokens The pointer to the array of token.
 *   NOTE: THE LAST TOKEN SOULD HAVE TYPE TOKEN_EOF
 */
-void PreProccess(Token *tokens);
+void PreProccess(Stack *tokens);
 
 #endif

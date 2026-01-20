@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
     Stack tokens = Tokenize(str);
 
     // call the pre-processor
-    PreProccess(tokens.data);
+    PreProccess(&tokens);
 
     // print all of them
     for (Token *token = tokens.data; token->type != TOKEN_EOF; token++) {

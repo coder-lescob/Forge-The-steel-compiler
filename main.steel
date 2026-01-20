@@ -1,3 +1,2 @@
-$const test 25
-print 10
+$const test 25 x 5
 print test
