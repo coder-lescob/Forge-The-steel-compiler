@@ -51,7 +51,7 @@ typedef struct Stack {
 #define PopLast(stack, type) \
     (sizeof(type) * stack.size == stack.isize * stack.size && stack.ptr > 0)? \
         ((type *)stack.data)[--stack.ptr] \
-        : 0 // 0 per default
+        : (type){0} // 0 per default
 
 /*
 * Inserts a item at idx.

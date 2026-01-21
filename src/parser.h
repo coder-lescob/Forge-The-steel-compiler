@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 // project
+#include "stack.h"
 #include "token.h"
 
 // a node of syntax
@@ -12,6 +13,7 @@ typedef struct SyntaxNode {
     // symbole or token
     TokenType  tokentype;
     size_t     symbol;
+    size_t     syntax;
 
     // The array of next nodes
     struct SyntaxNode **nextNodes;

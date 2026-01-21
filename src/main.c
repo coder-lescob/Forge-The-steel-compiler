@@ -20,10 +20,15 @@ static size_t flen(FILE *fptr) {
 
 static void PrintNode(AST_Node *node, size_t indent) {
     for (size_t i = 0; i < indent; i++) printf("\t");
-    printf("node %s\n", node->token->word);
+    if (node && node->token && node->token->word)
+        printf("node %s\n", node->token->word);
+    else 
+        printf("invalid node\n");
 
-    for (size_t i = 0; i < node->numnodes; i++) {
-        PrintNode(node->nextnodes[i], indent + 1);
+    if (node && node->nextnodes) {
+        for (size_t i = 0; i < node->numnodes; i++) {
+            PrintNode(node->nextnodes[i], indent + 1);
+        }
     }
 }
 
