@@ -175,15 +175,16 @@ ret:
 
         if (node->nextNodes) {
             Token *tok = &tokens[tokenptr];
-            size_t i;
-            for (i = 0; i < node->numnext; i++) {
+            size_t i, j;
+            for (i = 0, j = 0; i < node->numnext; i++) {
                 SyntaxNode *n = node->nextNodes[i];
                 if (tok->type == n->tokentype) {
                     node = n;
+                    j++;
                     break;
                 }
             }
-            if (i == node->numnext) {
+            if (j == 0) {
                 return NULL;
             }
         }
