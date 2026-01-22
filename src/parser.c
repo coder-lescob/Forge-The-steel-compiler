@@ -103,37 +103,25 @@ static void PushNode(AST ast, SyntaxNode *node, Token *token) {
     }
 }
 
-static int nodecmp(SyntaxNode a, SyntaxNode b) {
-    return a.nextNodes == b.nextNodes && a.tokentype == b.tokentype && a.symbol == b.symbol && a.syntax == b.syntax && a.numnext == b.numnext;
-}
-
-static size_t GetNodeIdx(Syntax *syntax, SyntaxNode node) {
-    for (size_t i = 0; i < syntax->numnodes; i++) {
-        if (nodecmp(syntax->nodes[i], node)) {
-            return i;
-        }
-    }
-    return -1;
-}
-
 // parses a list of token using syntax
 AST Parse(Token *tokens, Syntax *syntax) {
     // Start seach from token 0 syntax node 0
 
     typedef struct returninfo {
-        size_t node, tokenptr;
+        SyntaxNode *node;
+        size_t tokenptr;
     } returninfo;
 
     // should be enough depth
     Stack returnStack = CreateStack(500, returninfo);
-    size_t nodeIdx = 0ul, tokenptr = 0ul;
+    size_t tokenptr = 0ul;
+    SyntaxNode *node = &syntax->nodes[0];
 
     // create an ast
     AST ast = AllocatesAST_Node((AST_Node){.symbol = 0});
 
-    while (nodeIdx < syntax->numnodes) {
-        // get the node and the token
-        SyntaxNode *node = &syntax->nodes[nodeIdx];
+    while (1 /* Might cause issue TODO: find a better way */ ) {
+        // get the token
         Token *token     = &tokens    [tokenptr++];
 
         // is it last token ?
@@ -156,9 +144,9 @@ AST Parse(Token *tokens, Syntax *syntax) {
         }
         else {
             // syntax node
-            returninfo info = (returninfo){.node = nodeIdx, .tokenptr = tokenptr - 1};
+            returninfo info = (returninfo){.node = node, .tokenptr = tokenptr - 1};
             Push(returnStack, info, returninfo);
-            nodeIdx = GetNodeIdx(syntax, *syntax->symboltable[node->syntax]);
+            node = syntax->symboltable[node->syntax];
             continue; // don't inc nodeIdx
         }
 
@@ -179,7 +167,7 @@ ret:
             else {
                 // get the last return address and put it in the current node
                 returninfo info = PopLast(returnStack, returninfo);
-                nodeIdx         = info.node;
+                node            = info.node;
                 tokenptr        = info.tokenptr; // next token
                 continue;
             }
@@ -191,7 +179,7 @@ ret:
             for (i = 0; i < node->numnext; i++) {
                 SyntaxNode *n = node->nextNodes[i];
                 if (tok->type == n->tokentype) {
-                    nodeIdx = GetNodeIdx(syntax, *n);
+                    node = n;
                     break;
                 }
             }
