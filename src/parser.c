@@ -143,7 +143,7 @@ AST Parse(Token *tokens, Syntax *syntax) {
 
         // is it last token ?
         if (token->type == TOKEN_EOF) {
-            // no tokens left will syntax still wants tokens, syntax error
+            // no tokens left, syntax still wants tokens, syntax error
             goto syntaxerror;
         }
 
