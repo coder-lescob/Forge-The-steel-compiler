@@ -118,6 +118,16 @@ static void PushNode(AST ast, SyntaxNode *node, Token *token) {
     }
 }
 
+static SyntaxNode *GetNextNode(SyntaxNode *node, Token *token) {
+    for (size_t i = 0; i < node->numnext; i++) {
+        SyntaxNode *n = node->nextNodes[i];
+        if (token->type == n->tokentype) {
+            return n;
+        }
+    }
+    return NULL;
+}
+
 // parses a list of token using syntax
 AST Parse(Token *tokens, Syntax *syntax) {
 
@@ -137,7 +147,7 @@ AST Parse(Token *tokens, Syntax *syntax) {
     // create an ast
     AST ast = AllocatesAST_Node((AST_Node){.symbol = 0});
 
-    while (1 /* Might cause issue TODO: find a better way */ ) {
+    while (node /* while node valid */) {
         // get the token
         Token *token     = &tokens    [tokenptr++];
 
@@ -199,18 +209,11 @@ ret:
 next:
         if (node->nextNodes) {
             Token *tok = &tokens[tokenptr];
-            size_t i, j;
-            for (i = 0, j = 0; i < node->numnext; i++) {
-                SyntaxNode *n = node->nextNodes[i];
-                if (tok->type == n->tokentype) {
-                    node = n;
-                    j++;
-                    break;
-                }
-            }
-            if (j == 0) {
-                goto syntaxerror;
-            }
+            node = GetNextNode(node, tok);
+        }
+
+        if (!node) {
+            goto syntaxerror;
         }
     }
 
