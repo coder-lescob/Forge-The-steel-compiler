@@ -28,7 +28,7 @@ clean:
 	@rm -rf $(BUILD)/*
 
 .PHONY: build
-build: $(ALLOBJ)
+build: clean $(ALLOBJ)
 	@echo "LINKING DONE"
 	@mkdir -p $(BIN_DIR)
 	@$(CC) $(CFLAGS) $(ALLOBJ) -o $(TARGET)

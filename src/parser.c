@@ -103,7 +103,7 @@ static void PushNode(AST ast, SyntaxNode *node, Token *token) {
     if (astnode->numnodes && astnode->nextnodes) {
         // allocates more place
         AST_Node **oldptr = astnode->nextnodes;
-        astnode->nextnodes = calloc(astnode->numnodes + 1, sizeof(AST_Node *));
+        astnode->nextnodes = calloc(astnode->numnodes + 1 /* not perfect but might do the trick */ , sizeof(AST_Node *));
         memcpy(astnode->nextnodes, oldptr, astnode->numnodes);
         free(oldptr);
 
@@ -168,7 +168,7 @@ AST Parse(Token *tokens, Syntax *syntax) {
             returninfo info = (returninfo){.node = node, .tokenptr = --tokenptr};
             Push(returnStack, info, returninfo);
             node = syntax->symboltable[node->syntax];
-            continue; // don't inc nodeIdx
+            continue; // don't go to next node
         }
 
         // If last node
@@ -189,7 +189,7 @@ ret:
                 // get the last return address and put it in the current node
                 returninfo info = PopLast(returnStack, returninfo);
                 node            = info.node;
-                tokenptr        = info.tokenptr; // next token
+                tokenptr        = info.tokenptr;
                 continue;
             }
         }
