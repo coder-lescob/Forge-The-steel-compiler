@@ -145,6 +145,12 @@ AST Parse(Token *tokens, Syntax *syntax) {
 
         // If token node
         else if (node->tokentype != TOKEN_ILLEGAL) {
+            // a blank node means, I needed another node but not another token
+            if (node->tokentype == TOKEN_BLANK) {
+                tokenptr--;
+                goto next;
+            }
+
             // If token met
             if (node->tokentype == token->type) {
                 // push the node
@@ -186,6 +192,7 @@ ret:
             }
         }
 
+next:
         if (node->nextNodes) {
             Token *tok = &tokens[tokenptr];
             size_t i, j;
