@@ -25,7 +25,7 @@ static void PrintNode(AST_Node *node, size_t indent, int last) {
         else      printf("├─"); 
     }
     if (node && node->token && node->token->word)
-        printf("node %s\n", node->token->word);
+        printf("node %s of type 0x%lx\n", node->token->word, node->symbol);
     else 
         printf("invalid node\n");
 
