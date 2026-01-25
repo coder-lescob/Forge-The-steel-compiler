@@ -6,8 +6,8 @@ Syntax steelsyntax = {.numnodes = 0, .nodes = NULL, .numsymbols = 0, .symboltabl
 // build steel syntax
 void InitSteelSyntax(void) {
     // constants
-    #define NUM_SYMBOLS 1
-    #define NUM_NODES   3
+    #define NUM_SYMBOLS 2
+    #define NUM_NODES   4
 
     steelsyntax = (Syntax) {
         // allocates space
@@ -24,9 +24,11 @@ void InitSteelSyntax(void) {
     steelsyntax.nodes[1]              = (SyntaxNode) {.tokentype = TOKEN_EQUAL, .numnext = 1, .nextNodes = calloc(1, sizeof(SyntaxNode *))};
     steelsyntax.nodes[1].nextNodes[0] = &steelsyntax.nodes[2];
 
-    steelsyntax.nodes[2]              = (SyntaxNode) {.tokentype = TOKEN_NUMBER, .numnext = 0, .nextNodes = NULL};
+    steelsyntax.nodes[2]              = (SyntaxNode) {.tokentype = TOKEN_ILLEGAL, .syntax = 1, .numnext = 0, .nextNodes = NULL};
+    steelsyntax.nodes[3]              = (SyntaxNode) {.tokentype = TOKEN_NUMBER, .numnext = 0, .nextNodes = NULL};
 
     steelsyntax.symboltable[0]        = &steelsyntax.nodes[0];
+    steelsyntax.symboltable[1]        = &steelsyntax.nodes[3];
 }
 
 void DestroySteelSyntax(void) {
@@ -132,7 +134,7 @@ static void PushNode(AST ast, SyntaxNode *node, Token *token) {
 static SyntaxNode *GetNextNode(SyntaxNode *node, Token *token) {
     for (size_t i = 0; i < node->numnext; i++) {
         SyntaxNode *n = node->nextNodes[i];
-        if (token->type == n->tokentype) {
+        if (n->tokentype == TOKEN_ILLEGAL || token->type == n->tokentype) {
             return n;
         }
     }
@@ -163,7 +165,7 @@ AST Parse(Token *tokens, Syntax *syntax) {
 
     while (node /* while node valid */) {
         // get the token
-        Token *token     = &tokens    [tokenptr++];
+        Token *token = &tokens[tokenptr++];
 
         // is it last token ?
         if (token->type == TOKEN_EOF) {
@@ -191,7 +193,7 @@ AST Parse(Token *tokens, Syntax *syntax) {
         }
         else {
             // syntax node
-            returninfo info = (returninfo){.node = node, .tokenptr = --tokenptr};
+            returninfo info = (returninfo){.node = GetNextNode(node, &tokens[tokenptr]), .tokenptr = --tokenptr};
             Push(returnStack, info, returninfo);
             node = syntax->symboltable[node->syntax];
             continue; // don't go to next node
@@ -227,7 +229,7 @@ next:
         }
 
         if (!node) {
-            goto syntaxerror;
+            goto ret;
         }
     }
 
