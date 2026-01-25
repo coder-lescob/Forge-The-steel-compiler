@@ -71,6 +71,9 @@ int main(int argc, char **argv) {
     char *str = calloc(size + 1, sizeof(char)); // + the 0 terminator
     fread(str, sizeof(char), size, fptr);
 
+    // close the file
+    fclose(fptr);
+
     // tokenize the string
     Stack tokens = Tokenize(str);
 
@@ -84,17 +87,27 @@ int main(int argc, char **argv) {
         }
     }
 
+    // new line
+    printf("\n");
+
+    // init syntax of steel
     InitSteelSyntax();
 
+    // parse the tokens using the steel syntax
     AST ast = Parse(tokens.data, &steelsyntax);
 
+    // free all steel syntax ressources
     DestroySteelSyntax();
 
-    if (ast)
+    // print the ast
+    if (ast) {
         PrintNode(ast, 0, 1);
-    else
+    }
+    else {
         printf("Empty ast\n");
+    }
 
+    // free all tokens TODO: create a function to do so.
     for (Token *token = tokens.data; token->type != TOKEN_EOF; token++) {
         if (token->word != NULL) {
             free(token->word);
@@ -105,6 +118,6 @@ int main(int argc, char **argv) {
     // free the ast
     FreeAST(ast);
 
+    // free the tokens stack
     FreeStack(tokens);
-    fclose(fptr);
 }
