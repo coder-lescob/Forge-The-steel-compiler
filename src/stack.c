@@ -27,3 +27,9 @@ void Insert(Stack *stack, size_t idx, void *item) {
         memcpy((char *)stack->data + idx * stack->isize      , item                                    , stack->isize                     );
     }
 }
+
+void RemoveAt(Stack *stack, size_t idx) {
+    void *item = (char *)stack->data + idx * stack->isize;
+    memmove(item, (char *)item + stack->isize, (stack->ptr - idx) * stack->isize);
+    stack->ptr--;
+}

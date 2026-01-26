@@ -61,4 +61,11 @@ typedef struct Stack {
 */
 void Insert(Stack *stack, size_t idx, void *item);
 
+/*
+* Removes the item at idx
+* @param stack The stack
+* @param idx   The index
+*/
+void RemoveAt(Stack *stack, size_t idx);
+
 #endif

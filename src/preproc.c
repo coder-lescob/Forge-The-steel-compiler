@@ -102,6 +102,19 @@ static void FreeStatment(PreProcStatment statment) {
     free(statment.tokens);
 }
 
+// remove all tokens part of a comment
+static void RemoveComments(Stack *tokens, Stack *comments) {
+
+    // loop over each token
+    for (Token *token = tokens->data; token->type != TOKEN_EOF; token++) {
+
+        // if the current token is an open one
+        if (token->type == TOKEN_OPEN_COMMENT) {
+            
+        }
+    }
+}
+
 static void HandleToken(PreProcStatment *statment, Stack *tokens, size_t idx) {
     Token *token = (Token *)tokens->data + idx;
 

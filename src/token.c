@@ -47,10 +47,22 @@ TokenType ClassifyToken(char *str) {
     */
 
     static Token staticTokens[] = {
+        // preproc
         {TOKEN_DOLLAR, "$"},
         {TOKEN_NWLINE, "\n"},
         {TOKEN_CONST, "const"},
-        {TOKEN_EQUAL, "="}
+
+        // math symbols
+        {TOKEN_EQUAL, "="},
+        {TOKEN_PLUS, "+"},
+        {TOKEN_MINUS, "-"},
+        {TOKEN_STAR, "*"},
+        {TOKEN_SLASH, "/"},
+
+        // comments
+        {TOKEN_OPEN_COMMENT, "/*"},
+        {TOKEN_CLOSE_COMMENT, "*/"},
+        {TOKEN_COMMENT, "//"}
     };
 
     for (size_t i = 0; i < (sizeof(staticTokens) / sizeof(Token)); i++) {
