@@ -29,7 +29,21 @@ void Insert(Stack *stack, size_t idx, void *item) {
 }
 
 void RemoveAt(Stack *stack, size_t idx) {
+    if (idx >= stack->size) {
+        perror("Trying to remove an item outside of range");
+        exit(-1);
+    }
     void *item = (char *)stack->data + idx * stack->isize;
     memmove(item, (char *)item + stack->isize, (stack->ptr - idx) * stack->isize);
+    stack->ptr--;
+}
+
+void Remove(Stack *stack, void *ptr) {
+    size_t idx = (size_t)((char *)ptr - (char *)stack->data) / stack->isize;
+    if (idx >= stack->size) {
+        perror("Trying to remove an item outside of range");
+        exit(-1);
+    }
+    memmove(ptr, (char *)ptr + stack->isize, (stack->ptr - idx) * stack->isize);
     stack->ptr--;
 }

@@ -68,4 +68,11 @@ void Insert(Stack *stack, size_t idx, void *item);
 */
 void RemoveAt(Stack *stack, size_t idx);
 
+/*
+* Removes the item pointed to.
+* @param stack The stack
+* @param ptr   The pointer to the item.
+*/
+void Remove(Stack *stack, void *ptr);
+
 #endif

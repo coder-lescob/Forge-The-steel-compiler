@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
         Push(stackint, i, int);
     }
 
-    RemoveAt(&stackint, 150);
+    Remove(&stackint, stackint.data);
 
     for (size_t i = 0; i < stackint.ptr; i++) {
         printf("%d\n", ((int *)stackint.data)[i]);
