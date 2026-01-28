@@ -15,13 +15,14 @@ typedef enum TokenType {
     TOKEN_EQUAL,
     TOKEN_NWLINE,
     TOKEN_DOT,
+    TOKEN_OPEN_CURLY_BRACES,
+    TOKEN_CLOSE_CURLY_BRACES,
 
     // math
     TOKEN_PLUS,
     TOKEN_MINUS,
     TOKEN_STAR,
     TOKEN_SLASH,
-    
 
     // litteral
     TOKEN_NUMBER,

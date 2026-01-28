@@ -4,4 +4,7 @@ $const test 25
 x takes the value of 25.
 because test is a constant worth 25.
 */
-x = test
+
+{
+
+}

@@ -8,29 +8,26 @@ void InitSteelSyntax(void) {
     // syntax creation code (generated using gen_syntax.py) 
     // constants
     #define NUM_SYMBOLS 2
-    #define NUM_NODES   4
-    
+    #define NUM_NODES   3
+
     steelsyntax = (Syntax) {
         // allocates space
         .symboltable = calloc(NUM_SYMBOLS, sizeof(SyntaxNode *)),
         .numsymbols  = NUM_SYMBOLS,
-    
+
         .nodes    = calloc(NUM_NODES, sizeof(SyntaxNode)),
         .numnodes = NUM_NODES
     };
-    
-    steelsyntax.nodes[0] = (SyntaxNode) {.tokentype = TOKEN_ID, .symbol = 0 , .numnext = 1, .nextNodes = calloc(1, sizeof(SyntaxNode *))};
-    steelsyntax.nodes[0].nextNodes[0] = &steelsyntax.nodes[1];
-    
-    steelsyntax.nodes[1] = (SyntaxNode) {.tokentype = TOKEN_EQUAL, .symbol = 0 , .numnext = 1, .nextNodes = calloc(1, sizeof(SyntaxNode *))};
+
+    steelsyntax.nodes[0] = (SyntaxNode) {.tokentype = TOKEN_ILLEGAL, .symbol = 0 , .syntax = 1, .numnext = 0, .nextNodes = NULL};
+
+    steelsyntax.nodes[1] = (SyntaxNode) {.tokentype = TOKEN_OPEN_CURLY_BRACES, .symbol = 1 , .numnext = 1, .nextNodes = calloc(1, sizeof(SyntaxNode *))};
     steelsyntax.nodes[1].nextNodes[0] = &steelsyntax.nodes[2];
-    
-    steelsyntax.nodes[2] = (SyntaxNode) {.tokentype = TOKEN_ILLEGAL, .symbol = 0 , .syntax = 1, .numnext = 0, .nextNodes = NULL};
-    
-    steelsyntax.nodes[3] = (SyntaxNode) {.tokentype = TOKEN_NUMBER, .symbol = 1 , .numnext = 0, .nextNodes = NULL};
-    
+
+    steelsyntax.nodes[2] = (SyntaxNode) {.tokentype = TOKEN_CLOSE_CURLY_BRACES, .symbol = 1 , .numnext = 0, .nextNodes = NULL};
+
     steelsyntax.symboltable[0] = &steelsyntax.nodes[0];
-    steelsyntax.symboltable[1] = &steelsyntax.nodes[3];
+    steelsyntax.symboltable[1] = &steelsyntax.nodes[1];
 }
 
 void DestroySteelSyntax(void) {
@@ -134,13 +131,21 @@ static void PushNode(AST ast, SyntaxNode *node, Token *token) {
 }
 
 static SyntaxNode *GetNextNode(SyntaxNode *node, Token *token) {
+    // no tokens left
+    if (token->type == TOKEN_EOF) return NULL;
+
+    // use default node for specialized feature of the parser
+    SyntaxNode *defaultNode = NULL;
     for (size_t i = 0; i < node->numnext; i++) {
         SyntaxNode *n = node->nextNodes[i];
-        if (n->tokentype == TOKEN_ILLEGAL || token->type == n->tokentype) {
+        if (token->type == n->tokentype) {
             return n;
         }
+        else if (n->tokentype == TOKEN_ILLEGAL || n->tokentype == TOKEN_BLANK) {
+            defaultNode = n;
+        }
     }
-    return NULL;
+    return defaultNode;
 }
 
 // parses a list of token using syntax
@@ -230,6 +235,14 @@ ret:
 next:
         if (node->nextNodes) {
             Token *tok = &tokens[tokenptr];
+            if (tok->type == TOKEN_NWLINE) {
+                // skip all new lines
+                for (tok = &tokens[++tokenptr]; tok->type == TOKEN_NWLINE && tok->type != TOKEN_EOF; tok++, tokenptr++);
+
+                if (tok->type == TOKEN_EOF) {
+                    goto syntaxerror;
+                }
+            }
             node = GetNextNode(node, tok);
         }
 

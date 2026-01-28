@@ -125,7 +125,7 @@ Stack Tokenize(char *str) {
 
     // in case a token is left on buffer
     if (strlen(buffer) > 0 && nextType != TOKEN_ILLEGAL && nextType != TOKEN_BLANK) {
-        AddToken(&tokens, buffer, currentType);
+        AddToken(&tokens, buffer, nextType);
     }
 
     // add the end of file

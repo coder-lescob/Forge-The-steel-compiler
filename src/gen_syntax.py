@@ -13,6 +13,8 @@ class Token_Type(Enum):
     TOKEN_EQUAL   = 5
     TOKEN_NWLINE  = 6
     TOKEN_DOT     = 7
+    TOKEN_OPEN_CURLY_BRACES  = 18
+    TOKEN_CLOSE_CURLY_BRACES = 19
 
     # math
     TOKEN_PLUS    = 8
@@ -36,7 +38,7 @@ class Token_Type(Enum):
 
 class Syntax_Type(Enum):
     MAIN = 0,
-    NUM_LIT = 1
+    FRAME = 1
     NONE = ~0 # all 1s
 
 class Syntax_Node:
@@ -51,8 +53,8 @@ class Syntax_Node:
         print(
             f"steelsyntax.nodes[{idx}] = (SyntaxNode) "
             f"{"{"}.tokentype = {self.token.name}, "
-            f".symbol = {self.symbol.value if isinstance(self.symbol.value, int) else self.symbol.value[0]} "
-            f"{f", .syntax = {self.syntax.value}" if self.syntax != Syntax_Type.NONE else ""}, "
+            f".symbol = {self.symbol.value if isinstance(self.symbol.value, int) else self.symbol.value[0]}, "
+            f"{f".syntax = {self.syntax.value}" if self.syntax != Syntax_Type.NONE else ""}, "
             f".numnext = {len(self.next_nodes)}, "
             f".nextNodes = {f"calloc({len(self.next_nodes)}, sizeof(SyntaxNode *))" if len(self.next_nodes) > 0 else "NULL"}"
             f"{"}"};"
@@ -98,14 +100,13 @@ class Syntax:
 def main():
     # syntax yet
     nodes = [
-        Syntax_Node(Token_Type.TOKEN_ID     , next_nodes=[1], symbol=Syntax_Type.MAIN                            ),
-        Syntax_Node(Token_Type.TOKEN_EQUAL  , next_nodes=[2], symbol=Syntax_Type.MAIN                            ),
-        Syntax_Node(Token_Type.TOKEN_ILLEGAL, next_nodes=[] , symbol=Syntax_Type.MAIN, syntax=Syntax_Type.NUM_LIT),
-        Syntax_Node(Token_Type.TOKEN_NUMBER , next_nodes=[] , symbol=Syntax_Type.NUM_LIT                         )
+        Syntax_Node(Token_Type.TOKEN_ILLEGAL, next_nodes=[], symbol=Syntax_Type.MAIN, syntax=Syntax_Type.FRAME),
+        Syntax_Node(Token_Type.TOKEN_OPEN_CURLY_BRACES, next_nodes=[2], symbol=Syntax_Type.FRAME),
+        Syntax_Node(Token_Type.TOKEN_CLOSE_CURLY_BRACES, next_nodes=[], symbol=Syntax_Type.FRAME)
     ]
 
     symbol_table = [
-        0, 3
+        0, 1
     ]
 
     steel_syntax = Syntax(nodes, symbol_table)

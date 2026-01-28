@@ -52,6 +52,8 @@ TokenType ClassifyToken(char *str) {
         {TOKEN_NWLINE, "\n"},
         {TOKEN_CONST, "const"},
         {TOKEN_DOT, "."},
+        {TOKEN_OPEN_CURLY_BRACES, "{"},
+        {TOKEN_CLOSE_CURLY_BRACES, "}"},
 
         // math symbols
         {TOKEN_EQUAL, "="},
