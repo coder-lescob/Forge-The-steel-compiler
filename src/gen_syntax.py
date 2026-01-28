@@ -37,7 +37,7 @@ class Token_Type(Enum):
 class Syntax_Type(Enum):
     MAIN = 0,
     NUM_LIT = 1
-    NONE = ~0
+    NONE = ~0 # all 1s
 
 class Syntax_Node:
     def __init__(self, token_type: Token_Type,  next_nodes: list[int], symbol: Syntax_Type, syntax: Syntax_Type = Syntax_Type.NONE):
@@ -96,6 +96,7 @@ class Syntax:
             print(f"steelsyntax.symboltable[{i}] = &steelsyntax.nodes[{sym}];")
 
 def main():
+    # syntax yet
     nodes = [
         Syntax_Node(Token_Type.TOKEN_ID     , next_nodes=[1], symbol=Syntax_Type.MAIN                            ),
         Syntax_Node(Token_Type.TOKEN_EQUAL  , next_nodes=[2], symbol=Syntax_Type.MAIN                            ),
