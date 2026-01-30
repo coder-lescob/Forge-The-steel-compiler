@@ -2,7 +2,7 @@ $const test 25
 // this is a test comment
 
 {
-    test
+    test 36
 }
 
 /* end of file */
