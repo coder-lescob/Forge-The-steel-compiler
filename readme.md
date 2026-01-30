@@ -1,6 +1,6 @@
 # *Forge* - The steel compiler
 
-This is the current version (0.1.5) of **forge - the steel compiler**. Not finished yet.
+This is the current version (0.2.0) of **forge - the steel compiler**. Not finished yet.
 
 ## what's **Steel**
 
