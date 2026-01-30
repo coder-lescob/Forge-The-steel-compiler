@@ -7,8 +7,8 @@ Syntax steelsyntax = {.numnodes = 0, .nodes = NULL, .numsymbols = 0, .symboltabl
 void InitSteelSyntax(void) {
     // syntax creation code (generated using gen_syntax.py) 
     // constants
-    #define NUM_SYMBOLS 2
-    #define NUM_NODES   3
+    #define NUM_SYMBOLS 3
+    #define NUM_NODES   5
 
     steelsyntax = (Syntax) {
         // allocates space
@@ -19,15 +19,22 @@ void InitSteelSyntax(void) {
         .numnodes = NUM_NODES
     };
 
-    steelsyntax.nodes[0] = (SyntaxNode) {.tokentype = TOKEN_ILLEGAL, .symbol = 0 , .syntax = 1, .numnext = 0, .nextNodes = NULL};
+    steelsyntax.nodes[0] = (SyntaxNode) {.tokentype = TOKEN_ILLEGAL, .symbol = 0, .syntax = 1, .numnext = 0, .nextNodes = NULL};
 
-    steelsyntax.nodes[1] = (SyntaxNode) {.tokentype = TOKEN_OPEN_CURLY_BRACES, .symbol = 1 , .numnext = 1, .nextNodes = calloc(1, sizeof(SyntaxNode *))};
+    steelsyntax.nodes[1] = (SyntaxNode) {.tokentype = TOKEN_OPEN_CURLY_BRACES, .symbol = 1, .numnext = 1, .nextNodes = calloc(1, sizeof(SyntaxNode *))};
     steelsyntax.nodes[1].nextNodes[0] = &steelsyntax.nodes[2];
 
-    steelsyntax.nodes[2] = (SyntaxNode) {.tokentype = TOKEN_CLOSE_CURLY_BRACES, .symbol = 1 , .numnext = 0, .nextNodes = NULL};
+    steelsyntax.nodes[2] = (SyntaxNode) {.tokentype = TOKEN_ILLEGAL, .symbol = 1, .syntax = 2, .numnext = 2, .nextNodes = calloc(2, sizeof(SyntaxNode *))};
+    steelsyntax.nodes[2].nextNodes[0] = &steelsyntax.nodes[2];
+    steelsyntax.nodes[2].nextNodes[1] = &steelsyntax.nodes[3];
+
+    steelsyntax.nodes[3] = (SyntaxNode) {.tokentype = TOKEN_CLOSE_CURLY_BRACES, .symbol = 1, .numnext = 0, .nextNodes = NULL};
+
+    steelsyntax.nodes[4] = (SyntaxNode) {.tokentype = TOKEN_NUMBER, .symbol = 2, .numnext = 0, .nextNodes = NULL};
 
     steelsyntax.symboltable[0] = &steelsyntax.nodes[0];
     steelsyntax.symboltable[1] = &steelsyntax.nodes[1];
+    steelsyntax.symboltable[2] = &steelsyntax.nodes[4];
 }
 
 void DestroySteelSyntax(void) {
@@ -148,6 +155,19 @@ static SyntaxNode *GetNextNode(SyntaxNode *node, Token *token) {
     return defaultNode;
 }
 
+static Token *GetNextToken(Token *tokens, size_t *tokenptr) {
+    Token *tok = &tokens[*tokenptr];
+    if (tok->type == TOKEN_NWLINE) {
+        // skip all new lines
+        for (tok = &tokens[++(*tokenptr)]; tok->type == TOKEN_NWLINE && tok->type != TOKEN_EOF; tok++, (*tokenptr)++);
+
+        if (tok->type == TOKEN_EOF || tok->type == TOKEN_NWLINE) {
+            return NULL;
+        }
+    }
+    return tok;
+}
+
 // parses a list of token using syntax
 AST Parse(Token *tokens, Syntax *syntax) {
 
@@ -177,6 +197,9 @@ AST Parse(Token *tokens, Syntax *syntax) {
         // if the current token is a new line continue
         if (token->type == TOKEN_NWLINE) continue /* skip token */ ;
 
+        // debug print
+        // printf("Token %s %d    node %d\n", token->word, token->type, node->tokentype);
+
         // is it last token ?
         if (token->type == TOKEN_EOF) {
             // no tokens left, syntax still wants tokens, syntax error
@@ -203,8 +226,19 @@ AST Parse(Token *tokens, Syntax *syntax) {
         }
         else {
             // syntax node
-            returninfo info = (returninfo){.node = GetNextNode(node, &tokens[tokenptr]), .tokenptr = --tokenptr};
+
+            // get the next valid token
+            Token *tok;
+            size_t tokidx = tokenptr;
+            if (!(tok = GetNextToken(tokens, &tokidx))) {
+                goto syntaxerror;
+            }
+
+            // create and push return infos
+            returninfo info = (returninfo){.node = GetNextNode(node, tok), .tokenptr = tokenptr--};
             Push(returnStack, info, returninfo);
+            
+            // start over from the node in syntax
             node = syntax->symboltable[node->syntax];
             continue; // don't go to next node
         }
@@ -234,20 +268,21 @@ ret:
 
 next:
         if (node->nextNodes) {
-            Token *tok = &tokens[tokenptr];
-            if (tok->type == TOKEN_NWLINE) {
-                // skip all new lines
-                for (tok = &tokens[++tokenptr]; tok->type == TOKEN_NWLINE && tok->type != TOKEN_EOF; tok++, tokenptr++);
-
-                if (tok->type == TOKEN_EOF) {
-                    goto syntaxerror;
-                }
+            // Get the next token
+            Token *tok;
+            if (!(tok = GetNextToken(tokens, &tokenptr))) {
+                goto syntaxerror;
             }
+
+            // set the next node
             node = GetNextNode(node, tok);
         }
 
+        // If next node not valid
         if (!node) {
-            goto ret;
+            // dead end
+            // so which decison was bad ?
+            goto syntaxerror;
         }
     }
 

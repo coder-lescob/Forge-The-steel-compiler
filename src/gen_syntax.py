@@ -37,9 +37,12 @@ class Token_Type(Enum):
     TOKEN_EOF           = 17
 
 class Syntax_Type(Enum):
-    MAIN = 0,
-    FRAME = 1
-    NONE = ~0 # all 1s
+    MAIN     = 0
+    FRAME    = 1
+    LITERAL  = 2
+    VAR_DECL = 3
+    INST     = 4
+    NONE     = ~0 # all 1s
 
 class Syntax_Node:
     def __init__(self, token_type: Token_Type,  next_nodes: list[int], symbol: Syntax_Type, syntax: Syntax_Type = Syntax_Type.NONE):
@@ -54,7 +57,7 @@ class Syntax_Node:
             f"steelsyntax.nodes[{idx}] = (SyntaxNode) "
             f"{"{"}.tokentype = {self.token.name}, "
             f".symbol = {self.symbol.value if isinstance(self.symbol.value, int) else self.symbol.value[0]}, "
-            f"{f".syntax = {self.syntax.value}" if self.syntax != Syntax_Type.NONE else ""}, "
+            f"{f".syntax = {self.syntax.value}, " if self.syntax != Syntax_Type.NONE else ""}"
             f".numnext = {len(self.next_nodes)}, "
             f".nextNodes = {f"calloc({len(self.next_nodes)}, sizeof(SyntaxNode *))" if len(self.next_nodes) > 0 else "NULL"}"
             f"{"}"};"
@@ -102,11 +105,13 @@ def main():
     nodes = [
         Syntax_Node(Token_Type.TOKEN_ILLEGAL, next_nodes=[], symbol=Syntax_Type.MAIN, syntax=Syntax_Type.FRAME),
         Syntax_Node(Token_Type.TOKEN_OPEN_CURLY_BRACES, next_nodes=[2], symbol=Syntax_Type.FRAME),
-        Syntax_Node(Token_Type.TOKEN_CLOSE_CURLY_BRACES, next_nodes=[], symbol=Syntax_Type.FRAME)
+        Syntax_Node(Token_Type.TOKEN_ILLEGAL, next_nodes=[2, 3], symbol=Syntax_Type.FRAME, syntax=Syntax_Type.LITERAL),
+        Syntax_Node(Token_Type.TOKEN_CLOSE_CURLY_BRACES, next_nodes=[], symbol=Syntax_Type.FRAME),
+        Syntax_Node(Token_Type.TOKEN_NUMBER, next_nodes=[], symbol=Syntax_Type.LITERAL)
     ]
 
     symbol_table = [
-        0, 1
+        0, 1, 4
     ]
 
     steel_syntax = Syntax(nodes, symbol_table)
