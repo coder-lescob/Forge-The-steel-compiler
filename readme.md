@@ -4,12 +4,8 @@ This is the current version (0.2.0) of **forge - the steel compiler**. Not finis
 
 ## what's **Steel**
 
-Steel is my programming language that I created in 2025, not a **Rust** compiler, my compiler which means that it has to be better
-than **Rust** (because **Rust** complicates things too much for nothing unlike **C** which is simpler). Anyway **Steel** uses the 
-**C abi** which means that it uses the same way than **C** to communicates between functions and store data, so it is compatible with 
-any software that is compatible with **C**, which is most of the software of the world. Even if I'm not a big fan of **Rust** I borrowed 
-from it its major pro which is that it is safe in term of memory, but unlike **Rust**, instead of using references or wierd living time 
-variables that I don't understand **Steel** uses pointers that are made safes by a lot of compiler checks (not garenty yet that it was 
+Steel is my programming language that I created in 2025. **Steel** uses the  **C abi** which means that it uses the same way than **C** 
+to communicates between functions and store data, so it is compatible with any software that is compatible with **C**, which is most of the software of the world. Even if I'm not a big fan of **Rust** I borrowed from it its major pro which is that it is safe in term of memory, but unlike **Rust**, instead of using references or wierd living time variables that I don't understand **Steel** uses pointers that are made safes by a lot of compiler checks (not garenty yet that it was 
 correctly implemented).
 
 ### Safty features
