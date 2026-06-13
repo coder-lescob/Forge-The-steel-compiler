@@ -5,90 +5,93 @@
 #include <stdlib.h>
 
 // project
+#include "error.h"
 #include "stack.h"
 #include "token.h"
 
-typedef enum AST_FLAG {
-    AST_FLAG_NULL = 0x00,
-    AST_FLAG_FREE = 0x01
-} AST_FLAG;
+typedef enum NodeType {
+    NODE_NULL,
+    NODE_NUMBER,
+    NODE_BINARY_OPERATION,
+} NodeType;
 
-// a node of syntax
-typedef struct SyntaxNode {
-    // symbole or token
-    TokenType  tokentype;
-    size_t     symbol;
-    size_t     syntax;
-
-    // The array of next nodes
-    struct SyntaxNode **nextNodes;
-    size_t     numnext;
-} SyntaxNode;
-
-// represent a syntax
-typedef struct Syntax {
-    // a symbole table
-    SyntaxNode **symboltable;
-    size_t     numsymbols;
-
-    // and nodes
-    SyntaxNode *nodes;
-    size_t     numnodes;
-} Syntax;
-
-// an Abstract Syntax Tree node
+/** 
+ * an Abstract Syntax Tree node 
+ */
 typedef struct AST_Node {
-    // which symbol is that node belonging to ?
-    size_t   symbol;
+    // the type of the current node
+    NodeType type;
 
-    // The token of the current node
-    Token    *token;
-
-    // the flags of the current node
-    int flag;
+    // The tokens of the current node
+    size_t num_tokens;
+    Token  *tokens;
 
     // The next nodes of this node
     struct AST_Node **nextnodes;
-    size_t   numnodes;
+    size_t numnodes;
 } AST_Node;
 
 // The Abstract Syntax Tree representation in code
 typedef AST_Node *AST;
 
-// a structure to hold return info when returning to previous node
-typedef struct returninfo {
-    SyntaxNode *node;
-    size_t tokenptr;
-} returninfo;
+/**
+ * if the error is     ERROR_NULL then there is no error
+ * if the error is not ERROR_NULL then there is an error
+ */
+typedef struct ParsingResult {
+    Error error;
+    AST ast;
+} ParsingResult;
 
-/*
-* allocates an AST_Node on the heap don't forget to free it.
-* @param node The node to allocate.
-* @returns an pointer to an AST_Node.
-*/
-AST_Node *AllocatesAST_Node(AST_Node node);
+/**
+ * allocates an AST_Node on the heap don't forget to free it.
+ * @returns an pointer to an AST_Node.
+ * 
+ * @note all pointer fields are initialized to NULL
+ */
+AST_Node *CreateAST_Node(NodeType type);
 
-// the steel syntax
-extern Syntax steelsyntax;
-
-/* Initialize the steel syntax */
-void InitSteelSyntax(void);
-
-/* Destroys the steel syntax */
-void DestroySteelSyntax(void);
-
-/*
-* Frees the ast given.
-* @param ast The ast.
-*/
+/**
+ * Frees the ast given.
+ * @param ast The ast.
+ */
 void FreeAST(AST ast);
 
-/*
-* Parses a list of token finishing by the end of file token using the syntax provided.
-* @param tokens The list of token ending in a token of type TOKEN_EOF
-* @param syntax The syntax to use during parsing.
-* @returns an Abstract Syntax Tree (AST).
-*/
-AST Parse(Token *tokens, Syntax *syntax);
+/**
+ * Pushes the node at the end of result
+ * @param result the destination for the node
+ * @param node   the node to push 
+ * 
+ * @note if result contains an error nothing is done
+ * @note node MUST be allocated on the heap to avoid data corruption
+ */
+void PushNode(ParsingResult *result, ParsingResult *node);
+
+/**
+ * Pushes the tokens at the end of the result
+ * @param result the destination node for the token
+ * @param token  the token to push
+ * @param allowed_types a null terminated array of allowed types
+ */
+void PushToken(ParsingResult *result, Token **tokens, TokenType *allowed_types);
+
+/**
+ * Parses a list of token finishing by the end of file token
+ * @param tokens The list of token ending in a token of type TOKEN_EOF
+ * @return an Abstract Syntax Tree (AST).
+ */
+ParsingResult Parse(Token *tokens);
+
+/**
+ * parses a number from a list of given tokens
+ * @param token a pointer to the next token of the stream
+ */
+ParsingResult ParseNumber(Token **token);
+
+/**
+ * parses an expression from the token stream
+ * @param token a pointer to the next token of the stream
+ */
+ParsingResult ParseExpression(Token **token);
 
 #endif

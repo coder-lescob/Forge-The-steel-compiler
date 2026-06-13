@@ -48,7 +48,7 @@ $(OBJ_DIR)/%.o: $(SRC)/%.s
 	@$(ASM) $(ASFLAGS) $< -o $@
 
 .PHONY: run
-run:
+run: build
 	@clear
 	@echo "RUNNING PROGRAM:"
 	@$(TARGET) $(PROGRAM_INPUT)

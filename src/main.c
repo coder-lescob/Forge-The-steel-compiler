@@ -37,14 +37,19 @@ static void Indent(size_t indent, int last) {
 
 static void PrintNode(AST_Node *node, size_t indent, int last) {
     // If node exist and node.token exists and it has a word
-    if (node && node->token && node->token->word)
-        printf("node %s of type 0x%lx\n", node->token->word, node->symbol);
-    else 
-        printf("invalid node\n");
+    printf("node %d ", node->type);
+    if (node && node->tokens) {
+        printf("{ ");
+        for (size_t i = 0; i < node->num_tokens; i++) {
+            printf("%s,", node->tokens[i].word);
+        }
+        printf(" }");
+    }
+
+    printf("\n");
 
     if (node && node->nextnodes) {
         for (size_t i = 0; i < node->numnodes; i++) {
-            // size_t ind = (node->symbol != node->nextnodes[i]->symbol) ? indent + 1 : indent;
             Indent(indent + 1, last);
             PrintNode(node->nextnodes[i], indent + 1, i == node->numnodes - 1);
         }
@@ -91,14 +96,14 @@ int main(int argc, char **argv) {
     // new line
     printf("\n");
 
-    // init syntax of steel
-    InitSteelSyntax();
-
     // parse the tokens using the steel syntax
-    AST ast = Parse(tokens.data, &steelsyntax);
+    ParsingResult result = Parse(tokens.data);
 
-    // free all steel syntax ressources
-    DestroySteelSyntax();
+    if (result.error != ERROR_NULL) {
+        printf("error %d\n", result.error);
+    }
+
+    AST ast = result.ast;
 
     // print the ast
     if (ast) {

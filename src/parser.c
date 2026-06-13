@@ -1,93 +1,21 @@
 #include "parser.h"
+
 #include <string.h>
-
-Syntax steelsyntax = {.numnodes = 0, .nodes = NULL, .numsymbols = 0, .symboltable = NULL};
-
-// build steel syntax
-void InitSteelSyntax(void) {
-    // syntax creation code (generated using gen_syntax.py) 
-    // constants
-    #define NUM_SYMBOLS 4
-    #define NUM_NODES   8
-
-    steelsyntax = (Syntax) {
-        // allocates space
-        .symboltable = calloc(NUM_SYMBOLS, sizeof(SyntaxNode *)),
-        .numsymbols  = NUM_SYMBOLS,
-
-        .nodes    = calloc(NUM_NODES, sizeof(SyntaxNode)),
-        .numnodes = NUM_NODES
-    };
-
-    steelsyntax.nodes[0] = (SyntaxNode) {.tokentype = TOKEN_ILLEGAL, .symbol = 0, .syntax = 1, .numnext = 0, .nextNodes = NULL};
-
-    steelsyntax.nodes[1] = (SyntaxNode) {.tokentype = TOKEN_OPEN_CURLY_BRACES, .symbol = 1, .numnext = 1, .nextNodes = calloc(1, sizeof(SyntaxNode *))};
-    steelsyntax.nodes[1].nextNodes[0] = &steelsyntax.nodes[2];
-
-    steelsyntax.nodes[2] = (SyntaxNode) {.tokentype = TOKEN_ILLEGAL, .symbol = 1, .syntax = 3, .numnext = 2, .nextNodes = calloc(2, sizeof(SyntaxNode *))};
-    steelsyntax.nodes[2].nextNodes[0] = &steelsyntax.nodes[2];
-    steelsyntax.nodes[2].nextNodes[1] = &steelsyntax.nodes[3];
-
-    steelsyntax.nodes[3] = (SyntaxNode) {.tokentype = TOKEN_CLOSE_CURLY_BRACES, .symbol = 1, .numnext = 0, .nextNodes = NULL};
-
-    steelsyntax.nodes[4] = (SyntaxNode) {.tokentype = TOKEN_NUMBER, .symbol = 2, .numnext = 0, .nextNodes = NULL};
-
-    steelsyntax.nodes[5] = (SyntaxNode) {.tokentype = TOKEN_ID, .symbol = 3, .numnext = 1, .nextNodes = calloc(1, sizeof(SyntaxNode *))};
-    steelsyntax.nodes[5].nextNodes[0] = &steelsyntax.nodes[6];
-
-    steelsyntax.nodes[6] = (SyntaxNode) {.tokentype = TOKEN_EQUAL, .symbol = 3, .numnext = 1, .nextNodes = calloc(1, sizeof(SyntaxNode *))};
-    steelsyntax.nodes[6].nextNodes[0] = &steelsyntax.nodes[7];
-
-    steelsyntax.nodes[7] = (SyntaxNode) {.tokentype = TOKEN_ILLEGAL, .symbol = 3, .syntax = 2, .numnext = 0, .nextNodes = NULL};
-
-    steelsyntax.symboltable[0] = &steelsyntax.nodes[0];
-    steelsyntax.symboltable[1] = &steelsyntax.nodes[1];
-    steelsyntax.symboltable[2] = &steelsyntax.nodes[4];
-    steelsyntax.symboltable[3] = &steelsyntax.nodes[5];
-}
-
-void DestroySteelSyntax(void) {
-    // free resources
-    for (size_t i = 0; i < steelsyntax.numnodes; i++) {
-        if (steelsyntax.nodes[i].nextNodes)
-            free(steelsyntax.nodes[i].nextNodes);
-    }
-
-    free(steelsyntax.symboltable);
-    free(steelsyntax.nodes);
-
-    // make sizes 0
-    steelsyntax.numnodes   = 0;
-    steelsyntax.numsymbols = 0;
-}
+#include <stdbool.h>
 
 // allocates an AST_Node on the heap
-AST_Node *AllocatesAST_Node(AST_Node node) {
+AST_Node *CreateAST_Node(NodeType type) {
     // allocates, don't forget to free it
-    AST_Node *_node = malloc(sizeof(AST_Node));
-    if (!_node) return NULL;
-    *_node = node;
-    return _node;
-}
+    AST_Node *node = malloc(sizeof(AST_Node));
+    if (!node) return NULL;
+    
+    node->type       = type;
+    node->num_tokens = 0;
+    node->tokens     = NULL;
+    node->numnodes   = 0;
+    node->nextnodes  = NULL;
 
-static AST_Node *DescentAST(AST ast, size_t symbol) {
-    // loop over each next node of the current node
-    if (ast && ast->nextnodes)
-    for (size_t i = 0; i < ast->numnodes; i++) {
-        // get the node
-        AST_Node *node = ast->nextnodes[i];
-        if (!node) continue;
-
-        // if end node
-        if (node->numnodes == 0) {
-            return node;
-        }
-        else {
-            // see further
-            return DescentAST(node, symbol);
-        }
-    }
-    return ast;
+    return node;
 }
 
 void FreeAST(AST ast) {
@@ -99,210 +27,131 @@ void FreeAST(AST ast) {
     }
     free(ast->nextnodes);
 
-    // if there is still a word free it
-    if (ast->token) {
-        if (ast->token->word) {
-            freetoken(ast->token);
-        }
-
-        if ((ast->flag & AST_FLAG_FREE) > 0) {
-            free(ast->token);
-        }
+    // free all the tokens
+    if (ast->tokens != NULL) {
+        free(ast->tokens);
     }
 
     // finally free the ast itself
     free(ast);
 }
 
-static void PushNode(AST ast, SyntaxNode *node, Token *token) {
-    // descent the ast
-    AST_Node *astnode = DescentAST(ast, node->symbol);
+static Token *next_token(Token **previous_token) {
+    Token *next_token = (*previous_token)++;
 
-    // create the current node
-    AST_Node *current = AllocatesAST_Node(
-        (AST_Node){
-            .symbol    = node->symbol,
-            .token     = token,
-            .nextnodes = NULL,
-            .numnodes  = 0
-        }
-    );
-
-    if (astnode->numnodes && astnode->nextnodes) {
-        // allocates more place
-        AST_Node **oldptr = astnode->nextnodes;
-        astnode->nextnodes = calloc(astnode->numnodes + 1 /* not perfect but might do the trick */ , sizeof(AST_Node *));
-        memcpy(astnode->nextnodes, oldptr, astnode->numnodes);
-        free(oldptr);
-
-        // link the node to the ast
-        astnode->nextnodes[astnode->numnodes++] = current;
+    if (next_token->type == TOKEN_EOF) {
+        // ouf parsing done
+        return NULL;
     }
-    else {
-        // link node with others
-        astnode->nextnodes    = malloc(sizeof(AST_Node *));
-        astnode->nextnodes[0] = current;
-        astnode->numnodes     = 1;
+
+    return next_token;
+}
+
+void PushNode(ParsingResult *result, ParsingResult *node) {
+    if (result->error != ERROR_NULL || result == NULL || node == NULL) {
+        return;
+    }
+
+    // reallocate the node
+    AST_Node **new_nodes = realloc(result->ast->nextnodes, sizeof(AST_Node *) * (result->ast->numnodes + 1));
+    if (new_nodes == NULL) {
+        // allocation failed
+        // set the error state to ALLOCATION_FAILED
+        result->error = ERROR_ALLOCATION_FAILED;
+        // we don't care about what was stored in the ast, 
+        // it might be useful later for debugging
+        return;
+    }
+
+    // allocation sucessful
+    // replace the old nodes with the new ones
+    result->ast->nextnodes = new_nodes;
+    result->ast->numnodes++;
+
+    // put the next node at the end
+    /**
+     * @note the node MUST be stored on the heap to avoid data corruption
+     */
+    result->ast->nextnodes[result->ast->numnodes - 1] = node->ast;
+}
+
+void PushToken(ParsingResult *result, Token **tokens, TokenType *allowed_types) {
+    if (result == NULL || result->error != ERROR_NULL) {
+        return;
+    }
+
+    Token *token = next_token(tokens);
+
+    if (token == NULL) {
+        return;
+    }
+
+    if (allowed_types != NULL) {
+        // verify that the token is allowed
+        bool valid = false;
+        for (TokenType *type = allowed_types; (*type) != 0; type++) {
+            if (token->type == *type) {
+                valid = true;
+                break;
+            }
+        }
+
+        if (!valid) {
+            // error
+            result->error = ERROR_PARSING;
+        }
+    }
+
+    Token *new_tokens = realloc(result->ast->tokens, sizeof(Token) * (result->ast->num_tokens + 1));
+    if (new_tokens == NULL) {
+        // allocation failed
+        result->error = ERROR_ALLOCATION_FAILED;
+        return;
+    }
+
+    result->ast->tokens = new_tokens;
+    result->ast->num_tokens++;
+    memcpy(&result->ast->tokens[result->ast->num_tokens - 1], token, sizeof(Token));
+}
+
+// parses a list of token
+ParsingResult Parse(Token *tokens) {
+    return ParseExpression(&tokens);
+}
+
+static bool is_binary_operator(Token *token) {
+    switch (token->type) {
+        case TOKEN_PLUS:
+        case TOKEN_MINUS:
+        case TOKEN_STAR:
+        case TOKEN_SLASH:
+            return true;
+
+        default:
+            return false;
     }
 }
 
-static SyntaxNode *GetNextNode(SyntaxNode *node, Token *token, Stack *returnStack) {
-    // no tokens left
-    if (token->type == TOKEN_EOF) return NULL;
+ParsingResult ParseNumber(Token **token) {
+    // for now let just say we want a number token
+    ParsingResult result = { .error = ERROR_NULL, .ast = CreateAST_Node(NODE_NUMBER) };
+    TokenType allowed_types[] = {
+        TOKEN_NUMBER,
+        0,
+    };
+    PushToken(&result, token, allowed_types);
 
-    // use default node for specialized feature of the parser
-    SyntaxNode *defaultNode = NULL;
-    for (size_t i = 0; i < node->numnext; i++) {
-        SyntaxNode *n = node->nextNodes[i];
-        if (token->type == n->tokentype) {
-            return n;
-        }
-        else if (n->tokentype == TOKEN_ILLEGAL || n->tokentype == TOKEN_BLANK) {
-            defaultNode = n;
-        }
-    }
-
-    if (!defaultNode) {
-        // see back
-        if (returnStack->ptr > 0) {
-            returninfo info = PopLast((*returnStack), returninfo);
-            return GetNextNode(info.node, token, returnStack);
-        }
-    }
-
-    return defaultNode;
+    return result;
 }
 
-static Token *GetNextToken(Token *tokens, size_t *tokenptr) {
-    Token *tok = &tokens[*tokenptr];
-    if (tok->type == TOKEN_NWLINE) {
-        // skip all new lines
-        for (tok = &tokens[++(*tokenptr)]; tok->type == TOKEN_NWLINE && tok->type != TOKEN_EOF; tok++, (*tokenptr)++);
+// implemented as derivation of pratt parsing
+ParsingResult ParseExpression(Token **token) {
+    
+    ParsingResult lhs = { .error = ERROR_NULL, .ast = CreateAST_Node(NODE_BINARY_OPERATION) };
 
-        if (tok->type == TOKEN_EOF || tok->type == TOKEN_NWLINE) {
-            return NULL;
-        }
-    }
-    return tok;
-}
+    // parse the first number of the expression
+    ParsingResult num = ParseNumber(token);
+    PushNode(&lhs, &num);
 
-// parses a list of token using syntax
-AST Parse(Token *tokens, Syntax *syntax) {
-
-    // should be enough depth
-    Stack returnStack = CreateStack(500, returninfo);
-
-    // Start parsing from token 0 syntax node 0 of symbol 0.
-    size_t tokenptr = 0ul;
-    SyntaxNode *node = syntax->symboltable[0];
-
-    // create an ast
-    Token *root = calloc(1, sizeof(Token));
-    *root = (Token) {.type = TOKEN_ROOT, .word = calloc(100, sizeof(char))};
-    memcpy(root->word, "root", sizeof("root"));
-    AST ast = AllocatesAST_Node((AST_Node){.symbol = ~0 /* all ones */, .token = root, .flag = AST_FLAG_FREE});
-
-    while (node /* while node valid */) {
-        // get the token
-        Token *token = &tokens[tokenptr++];
-
-        if (!token || token->type == TOKEN_EOF || token->type == TOKEN_ILLEGAL) {
-            // invalid token
-            goto syntaxerror;
-        }
-
-        // if the current token is a new line continue
-        if (token->type == TOKEN_NWLINE) continue /* skip token */ ;
-
-        // debug print
-        /*if (node)
-            printf("Token %s %d \t node %d\n", token->word, token->type, node->tokentype);
-        else
-            printf("Token %s %d \t node null\n", token->word, token->type);*/
-
-        // If token node
-        if (node->tokentype != TOKEN_ILLEGAL) {
-            // a blank node means, I needed another node but not another token
-            if (node->tokentype == TOKEN_BLANK) {
-                tokenptr--;
-                goto next;
-            }
-
-            // If token met
-            if (node->tokentype == token->type) {
-                // push the node
-                PushNode(ast, node, token);
-            }
-            else {
-                // verify before
-                goto ret;
-            }
-        }
-        else {
-            // syntax node
-
-            // get the next valid token
-            Token *tok;
-            size_t tokidx = tokenptr;
-            if (!(tok = GetNextToken(tokens, &tokidx))) {
-                goto syntaxerror;
-            }
-
-            // create and push return infos
-            returninfo info = (returninfo){.node = GetNextNode(node, tok, &returnStack), .tokenptr = tokenptr--};
-            Push(returnStack, info, returninfo);
-            
-            // start over from the node in syntax
-            node = syntax->symboltable[node->syntax];
-            continue; // don't go to next node
-        }
-
-        // If last node
-        if (node->numnext == 0) {
-ret:
-            // if no return val possible
-            if (returnStack.ptr == 0) {
-                // If no token left
-                if (tokens[tokenptr].type == TOKEN_EOF) {
-                    // end of parsing
-                    break;
-                }
-                
-                // tokens left
-                goto syntaxerror;
-            }
-            else {
-                // get the last return address and put it in the current node
-                returninfo info = PopLast(returnStack, returninfo);
-                node            = info.node;
-                tokenptr        = info.tokenptr;
-                continue;
-            }
-        }
-
-next:
-        if (node->nextNodes) {
-            // Get the next token
-            Token *tok;
-            if (!(tok = GetNextToken(tokens, &tokenptr))) {
-                goto syntaxerror;
-            }
-
-            // set the next node
-            node = GetNextNode(node, tok, &returnStack);
-        }
-        
-        // If next node not valid
-        if (!node) {
-            // dead end
-            // so which decison was bad ?
-            goto syntaxerror;
-        }
-    }
-
-    return ast;
-
-syntaxerror:
-    FreeAST(ast);
-    return NULL;
+    return lhs;
 }

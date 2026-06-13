@@ -35,6 +35,7 @@ typedef enum TokenType {
     TOKEN_CLOSE_COMMENT,
     TOKEN_COMMENT,
 
+    // the end of the file
     TOKEN_EOF
 } TokenType;
 
