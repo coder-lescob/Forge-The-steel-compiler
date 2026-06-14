@@ -108,6 +108,9 @@ ParsingResult ParseExpression(Token **token, float min_binding_power);
 
 /**
  * get the binding power of op
+ * @param op the token operator
+ * 
+ * @note if op isn't an operator (0, 0) is returned
  */
 BindingPower GetBindingPower(Token *op);
 
