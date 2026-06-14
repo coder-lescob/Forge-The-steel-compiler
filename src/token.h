@@ -46,26 +46,26 @@ typedef struct Token {
     int      freed;
 } Token;
 
-/*
-* Classify a token, if it doesn't match any category it is marked as ILLEGAL
-* @param   str The string of the token
-* @returns The type of the token
-*/
+/**
+ * Classify a token, if it doesn't match any category it is marked as ILLEGAL
+ * @param   str The string of the token
+ * @returns The type of the token
+ */
 TokenType ClassifyToken(char *str);
 
-/*
-* Compare a and b.
-* If they match return 1
-* Otherwise return 0
-* @param a The first token.
-* @param b The second token.
-*/
+/**
+ * Compare a and b.
+ * If they match return 1
+ * Otherwise return 0
+ * @param a The first token.
+ * @param b The second token.
+ */
 int tokcmp(Token *a, Token *b);
 
-/*
-* Frees the string of a token.
-* @param token The token to be freed.
-*/
+/**
+ * Frees the string of a token.
+ * @param token The token to be freed.
+ */
 void freetoken(Token *token);
 
 #endif
