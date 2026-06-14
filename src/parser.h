@@ -65,6 +65,11 @@ AST_Node *CreateAST_Node(NodeType type);
 void FreeAST(AST ast);
 
 /**
+ * create a parsing result of a given type
+ */
+ParsingResult CreateParsingResult(NodeType type);
+
+/**
  * Pushes the node at the end of result
  * @param result the destination for the node
  * @param node   the node to push 

@@ -36,6 +36,13 @@ void FreeAST(AST ast) {
     free(ast);
 }
 
+ParsingResult CreateParsingResult(NodeType type) {
+    return (ParsingResult) {
+        .error = ERROR_NULL,
+        .ast   = CreateAST_Node(type),
+    };
+}
+
 static Token *next_token(Token **previous_token) {
     Token *next_token = (*previous_token)++;
 
@@ -135,7 +142,7 @@ static TokenType binary_operators[] = {
 
 ParsingResult ParseNumber(Token **token) {
     // for now let just say we want a number token
-    ParsingResult result = { .error = ERROR_NULL, .ast = CreateAST_Node(NODE_NUMBER) };
+    ParsingResult result = CreateParsingResult(NODE_NUMBER);
     TokenType allowed_types[] = {
         TOKEN_NUMBER,
         0,
@@ -163,8 +170,7 @@ ParsingResult ParseExpression(Token **token, float min_binding_power) {
         }
         
         // push the operator in an operaton
-        ParsingResult operation = { .error = ERROR_NULL, .ast = CreateAST_Node(NODE_BINARY_OPERATION) };
-        
+        ParsingResult operation = CreateParsingResult(NODE_BINARY_OPERATION);
         PushToken(&operation, token, binary_operators);
         
         ParsingResult rhs = ParseExpression(token, binding_power.rhs);
