@@ -9,70 +9,70 @@ typedef struct Stack {
     size_t ptr, size, isize;
 } Stack;
 
-/*
-* Creates a stack.
-* @param capacity The capacity of the stack
-* @param type     The type of each item of the stack
-* @returns A stack, don't forget to free it with FreeStack
-*/
+/**
+ * Creates a stack.
+ * @param capacity The capacity of the stack
+ * @param type     The type of each item of the stack
+ * @returns A stack, don't forget to free it with FreeStack
+ */
 #define CreateStack(capacity, type) \
     (Stack) { \
         .data = calloc(capacity, sizeof(type)), \
         .ptr = 0, .size = capacity, .isize = sizeof(type) \
     }
 
-/*
-* Frees a stack created with CreateStack.
-* @param stack The stack to free
-*/
+/**
+ * Frees a stack created with CreateStack.
+ * @param stack The stack to free
+ */
 #define FreeStack(stack) \
     if (stack.data && stack.size && stack.isize) { \
         free(stack.data); \
         stack.size = 0, stack.ptr = 0, stack.isize = 0; \
     }
 
-/*
-* Pushes an item to the end of the stack.
-* @param stack the stack
-* @param item  The item.
-* @param type  The item type, please don't lie.
-*/
+/**
+ * Pushes an item to the end of the stack.
+ * @param stack the stack
+ * @param item  The item.
+ * @param type  The item type, please don't lie.
+ */
 #define Push(stack, item, type) \
     if (sizeof(type) == sizeof(item) && sizeof(item) == stack.isize && stack.ptr < stack.size) \
         ((type *)stack.data)[stack.ptr++] = item
 
-/*
-* Pops the last item from the stack. 
-* If it is not possible to reach it returns 0
-* @param stack The stack
-* @param type  The item type, please don't lie.
-* @returns The item poped.
-*/
+/**
+ * Pops the last item from the stack. 
+ * If it is not possible to reach it returns 0
+ * @param stack The stack
+ * @param type  The item type, please don't lie.
+ * @returns The item poped.
+ */
 #define PopLast(stack, type) \
     (sizeof(type) * stack.size == stack.isize * stack.size && stack.ptr > 0)? \
         ((type *)stack.data)[--stack.ptr] \
         : (type){0} // NULL per default
 
-/*
-* Inserts a item at idx.
-* @param stack The pointer to the stack
-* @param idx   The index of the item to insert.
-* @param item  The pointer to the item of choice.
-*/
+/**
+ * Inserts a item at idx.
+ * @param stack The pointer to the stack
+ * @param idx   The index of the item to insert.
+ * @param item  The pointer to the item of choice.
+ */
 void Insert(Stack *stack, size_t idx, void *item);
 
-/*
-* Removes the item at idx
-* @param stack The stack
-* @param idx   The index
-*/
+/**
+ * Removes the item at idx
+ * @param stack The stack
+ * @param idx   The index
+ */
 void RemoveAt(Stack *stack, size_t idx);
 
-/*
-* Removes the item pointed to.
-* @param stack The stack
-* @param ptr   The pointer to the item.
-*/
+/**
+ * Removes the item pointed to.
+ * @param stack The stack
+ * @param ptr   The pointer to the item.
+ */
 void Remove(Stack *stack, void *ptr);
 
 #endif
