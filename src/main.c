@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 // project
 #include "stack.h"
@@ -18,24 +19,19 @@ static size_t flen(FILE *fptr) {
     return size + 1;
 }
 
-static void Indent(size_t indent, int last) {
+static void Indent(size_t indent, bool last) {
     // renders indent - 1 bars to show previous branches going down
     for (size_t i = 1; i < indent; i++) {
-        if (last) printf("  ");
-        else printf("│ ");
+        printf("│ ");
     }
 
     // if there were any node before indent > 0
-    if (indent) {
-        // last one should be visally different
-        if (last) printf("└─");
-
-        // Than a random node not at the end
-        else      printf("├─"); 
+    if (indent > 0) {
+        printf("├─"); 
     }
 }
 
-static void PrintNode(AST_Node *node, size_t indent, int last) {
+static void PrintNode(AST_Node *node, size_t indent, bool last) {
     // If node exist and node.token exists and it has a word
     printf("node %d ", node->type);
     if (node && node->tokens) {
@@ -50,8 +46,9 @@ static void PrintNode(AST_Node *node, size_t indent, int last) {
 
     if (node && node->nextnodes) {
         for (size_t i = 0; i < node->numnodes; i++) {
-            Indent(indent + 1, last);
+            Indent(indent + 1, i == node->numnodes - 1);
             PrintNode(node->nextnodes[i], indent + 1, i == node->numnodes - 1);
+            
         }
     }
 }
@@ -112,6 +109,10 @@ int main(int argc, char **argv) {
     else {
         printf("Empty ast\n");
     }
+
+    /**
+     * @note as soon as the tokens are freed the ast becomes invalid
+     */
 
     // free all tokens TODO: create a function to do so.
     for (Token *token = tokens.data; token->type != TOKEN_EOF; token++) {

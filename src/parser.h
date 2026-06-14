@@ -44,6 +44,13 @@ typedef struct ParsingResult {
 } ParsingResult;
 
 /**
+ * a binding power
+ */
+typedef struct BindingPower {
+    float lhs, rhs;
+} BindingPower;
+
+/**
  * allocates an AST_Node on the heap don't forget to free it.
  * @returns an pointer to an AST_Node.
  * 
@@ -92,6 +99,11 @@ ParsingResult ParseNumber(Token **token);
  * parses an expression from the token stream
  * @param token a pointer to the next token of the stream
  */
-ParsingResult ParseExpression(Token **token);
+ParsingResult ParseExpression(Token **token, float min_binding_power);
+
+/**
+ * get the binding power of op
+ */
+BindingPower GetBindingPower(Token *op);
 
 #endif

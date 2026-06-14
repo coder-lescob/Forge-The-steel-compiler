@@ -63,6 +63,12 @@ void PushNode(ParsingResult *result, ParsingResult *node) {
         return;
     }
 
+    // propagate any error
+    // so that it is O(1) to check for having an error
+    if (node->error != ERROR_NULL) {
+        result->error = ERROR_SYNTAX_PROPAGATING;
+    }
+
     // allocation sucessful
     // replace the old nodes with the new ones
     result->ast->nextnodes = new_nodes;
@@ -98,7 +104,7 @@ void PushToken(ParsingResult *result, Token **tokens, TokenType *allowed_types) 
 
         if (!valid) {
             // error
-            result->error = ERROR_PARSING;
+            result->error = ERROR_SYNTAX;
         }
     }
 
@@ -116,21 +122,16 @@ void PushToken(ParsingResult *result, Token **tokens, TokenType *allowed_types) 
 
 // parses a list of token
 ParsingResult Parse(Token *tokens) {
-    return ParseExpression(&tokens);
+    return ParseExpression(&tokens, 0.0f);
 }
 
-static bool is_binary_operator(Token *token) {
-    switch (token->type) {
-        case TOKEN_PLUS:
-        case TOKEN_MINUS:
-        case TOKEN_STAR:
-        case TOKEN_SLASH:
-            return true;
-
-        default:
-            return false;
-    }
-}
+static TokenType binary_operators[] = {
+    TOKEN_PLUS,
+    TOKEN_MINUS,
+    TOKEN_STAR,
+    TOKEN_SLASH,
+    0,
+};
 
 ParsingResult ParseNumber(Token **token) {
     // for now let just say we want a number token
@@ -145,13 +146,48 @@ ParsingResult ParseNumber(Token **token) {
 }
 
 // implemented as derivation of pratt parsing
-ParsingResult ParseExpression(Token **token) {
-    
-    ParsingResult lhs = { .error = ERROR_NULL, .ast = CreateAST_Node(NODE_BINARY_OPERATION) };
+ParsingResult ParseExpression(Token **token, float min_binding_power) {
 
     // parse the first number of the expression
-    ParsingResult num = ParseNumber(token);
-    PushNode(&lhs, &num);
+    ParsingResult lhs = ParseNumber(token);
+
+    while ((**token).type != TOKEN_EOF) {
+        // peek the operator token
+        Token *op = *token;
+
+        // get the binding power of the operator
+        BindingPower binding_power = GetBindingPower(op);
+
+        if (binding_power.lhs < min_binding_power) {
+            break;
+        }
+        
+        // push the operator in an operaton
+        ParsingResult operation = { .error = ERROR_NULL, .ast = CreateAST_Node(NODE_BINARY_OPERATION) };
+        
+        PushToken(&operation, token, binary_operators);
+        
+        ParsingResult rhs = ParseExpression(token, binding_power.rhs);
+        PushNode(&operation, &lhs);
+        PushNode(&operation, &rhs);
+
+        lhs = operation;
+    }
 
     return lhs;
+}
+
+BindingPower GetBindingPower(Token *op) {
+    switch (op->type) {
+        case TOKEN_PLUS: 
+        case TOKEN_MINUS: 
+            return (BindingPower) { 1.0f, 1.1f };
+
+        case TOKEN_STAR:
+        case TOKEN_SLASH:
+            return (BindingPower) { 2.0f, 2.1f };
+
+        default: 
+            return (BindingPower) { 0.0f, 0.0f };
+    }
 }
