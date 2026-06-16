@@ -53,6 +53,8 @@ TokenType ClassifyToken(char *str) {
         {TOKEN_NWLINE, "\n", 1 /* string on stack no need to free */},
         {TOKEN_CONST, "const", 1 /* string on stack no need to free */},
         {TOKEN_DOT, ".", 1 /* string on stack no need to free */},
+        {TOKEN_OPEN_PARENTHESES, "(", 1 /* string on stack no need to free */ },
+        {TOKEN_CLOSE_PARENTHESES, ")", 1 /* string on stack no need to free */},
         {TOKEN_OPEN_CURLY_BRACES, "{", 1 /* string on stack no need to free */},
         {TOKEN_CLOSE_CURLY_BRACES, "}", 1 /* string on stack no need to free */},
 
@@ -66,7 +68,7 @@ TokenType ClassifyToken(char *str) {
         // comments
         {TOKEN_OPEN_COMMENT, "/*", 1 /* string on stack no need to free */},
         {TOKEN_CLOSE_COMMENT, "*/", 1 /* string on stack no need to free */},
-        {TOKEN_COMMENT, "//", 1 /* string on stack no need to free */}
+        {TOKEN_COMMENT, "//", 1 /* string on stack no need to free */},
     };
 
     for (size_t i = 0; i < (sizeof(staticTokens) / sizeof(Token)); i++) {

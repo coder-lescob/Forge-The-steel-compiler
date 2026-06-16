@@ -127,6 +127,19 @@ void PushToken(ParsingResult *result, Token **tokens, TokenType *allowed_types) 
     memcpy(&result->ast->tokens[result->ast->num_tokens - 1], token, sizeof(Token));
 }
 
+ParsingResult TryParse(ParsingResult (*F)(Token **), Token **tokens) {
+    // try to parse with F
+    Token *error_tokens = *tokens;
+    ParsingResult result = F(&error_tokens);
+
+    // If there is no error then update the token pointer
+    if (result.error == ERROR_NULL) {
+        *tokens = error_tokens;
+    }
+
+    return result;
+}
+
 // parses a list of token
 ParsingResult Parse(Token *tokens) {
     return ParseExpression(&tokens, 0.0f);
@@ -156,11 +169,61 @@ ParsingResult ParseNumber(Token **token) {
 ParsingResult ParseExpression(Token **token, float min_binding_power) {
 
     // parse the first number of the expression
-    ParsingResult lhs = ParseNumber(token);
+    ParsingResult lhs = TryParse(ParseNumber, token);
+
+    if (lhs.error != ERROR_NULL) {
+        // then lhs is not a number
+        // so we don't need it
+        FreeAST(lhs.ast);
+        lhs.ast = NULL;
+
+        Token *tok = next_token(token);
+        if (tok == NULL) {
+            return CreateParsingResult(NODE_NULL);
+        }
+
+        if (tok->type == TOKEN_OPEN_PARENTHESES) {
+            lhs = ParseExpression(token, 0.0);
+
+            if (lhs.error != ERROR_NULL) {
+                return lhs;
+            }
+
+            Token *close_parentheses = next_token(token);
+            if (close_parentheses->type != TOKEN_CLOSE_PARENTHESES) {
+                // Oh, oh missing close parentheses
+                // free the old result
+                FreeAST(lhs.ast);
+                lhs.ast = NULL;
+
+                lhs = CreateParsingResult(NODE_MISSING_CLOSE_PARENTHESES);
+                lhs.error = ERROR_SYNTAX;
+                
+                TokenType all[] = {0};
+                PushToken(&lhs, token, all);
+            }
+        }
+        else {
+            // Oh, oh unknown suffix operator
+            // free the old result
+            FreeAST(lhs.ast);
+            lhs.ast = NULL;
+
+            lhs = CreateParsingResult(NODE_UNKNOWN_SUFFIX_OP);
+            lhs.error = ERROR_SYNTAX;
+            
+            TokenType all[] = {0};
+            PushToken(&lhs, token, all);
+        }
+    }
 
     while ((**token).type != TOKEN_EOF) {
         // peek the operator token
         Token *op = *token;
+
+        if (op->type == TOKEN_EOF || op->type == TOKEN_CLOSE_PARENTHESES) {
+            break;
+        }
 
         // get the binding power of the operator
         BindingPower binding_power = GetBindingPower(op);

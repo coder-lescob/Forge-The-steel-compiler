@@ -13,6 +13,8 @@ typedef enum NodeType {
     NODE_NULL,
     NODE_NUMBER,
     NODE_BINARY_OPERATION,
+    NODE_MISSING_CLOSE_PARENTHESES,
+    NODE_UNKNOWN_SUFFIX_OP,
 } NodeType;
 
 /** 
@@ -86,6 +88,15 @@ void PushNode(ParsingResult *result, ParsingResult *node);
  * @param allowed_types a null terminated array of allowed types
  */
 void PushToken(ParsingResult *result, Token **tokens, TokenType *allowed_types);
+
+/**
+ * Try to parse using F if it is not successful the error is returned
+ * but no tokens are consumed.
+ * @param F the parsing function
+ * @param tokens the pointer to the token stream
+ * @return the result of F if F was successful else 
+ */
+ParsingResult TryParse(ParsingResult (*F)(Token **), Token **tokens);
 
 /**
  * Parses a list of token finishing by the end of file token
