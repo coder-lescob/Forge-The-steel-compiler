@@ -103,6 +103,10 @@ void Debug_PrintError(Error error) {
         case ERROR_UNKNOWN_SUFFIX_OP:
             printf("UNKNOWN SUFFIX OPERATOR");
             break;
+
+        case ERROR_EXPECTED_NUMBER_ID:
+            printf("EXPECTED NUMBER OR IDENTIFIER");
+            break;
     
         default:
             printf("UNKNOWN ERROR (probably corrupted)");

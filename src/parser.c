@@ -218,7 +218,7 @@ AST_Node *ParseExpression(Token **token, float min_binding_power) {
             FreeAST(lhs);
             lhs = NULL;
 
-            lhs = CreateErrorAST_Node(ERROR_UNKNOWN_SUFFIX_OP, NODE_ERROR);
+            lhs = CreateErrorAST_Node(ERROR_EXPECTED_NUMBER_ID, NODE_ERROR);
             
             TokenType all[] = {0};
             PushToken(lhs, token, all);
