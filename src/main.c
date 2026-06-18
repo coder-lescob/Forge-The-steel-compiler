@@ -10,6 +10,7 @@
 #include "lexer.h"
 #include "preproc.h"
 #include "parser.h"
+#include "debug.h"
 
 static size_t flen(FILE *fptr) {
     size_t size = 0;
@@ -17,40 +18,6 @@ static size_t flen(FILE *fptr) {
     fseek(fptr, 0, SEEK_SET);
 
     return size + 1;
-}
-
-static void Indent(size_t indent, bool last) {
-    // renders indent - 1 bars to show previous branches going down
-    for (size_t i = 1; i < indent; i++) {
-        printf("│ ");
-    }
-
-    // if there were any node before indent > 0
-    if (indent > 0) {
-        printf("├─"); 
-    }
-}
-
-static void PrintNode(AST_Node *node, size_t indent, bool last) {
-    // If node exist and node.token exists and it has a word
-    printf("node %d ", node->type);
-    if (node && node->tokens) {
-        printf("{ ");
-        for (size_t i = 0; i < node->num_tokens; i++) {
-            printf("%s,", node->tokens[i].word);
-        }
-        printf(" }");
-    }
-
-    printf("\n");
-
-    if (node && node->nextnodes) {
-        for (size_t i = 0; i < node->numnodes; i++) {
-            Indent(indent + 1, i == node->numnodes - 1);
-            PrintNode(node->nextnodes[i], indent + 1, i == node->numnodes - 1);
-            
-        }
-    }
 }
 
 int main(int argc, char **argv) {
@@ -94,17 +61,17 @@ int main(int argc, char **argv) {
     printf("\n");
 
     // parse the tokens using the steel syntax
-    ParsingResult result = Parse(tokens.data);
+    AST result = Parse(tokens.data);
 
-    if (result.error != ERROR_NULL) {
-        printf("error %d\n", result.error);
+    if (result->error != ERROR_NULL) {
+        printf("error: ");
+        Debug_PrintError(result->error);
+        printf("\n");
     }
 
-    AST ast = result.ast;
-
     // print the ast
-    if (ast) {
-        PrintNode(ast, 0, 1);
+    if (result) {
+        Debug_PrintAST(result, 0);
     }
     else {
         printf("Empty ast\n");
@@ -120,7 +87,7 @@ int main(int argc, char **argv) {
     }
 
     // free the ast
-    FreeAST(ast);
+    FreeAST(result);
 
     // free the tokens stack
     FreeStack(tokens);

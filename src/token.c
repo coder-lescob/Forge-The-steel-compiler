@@ -29,8 +29,7 @@ static int isnum(char *str) {
     if (strlen(str) == 0) return 0;
 
     for (size_t i = 0; i < strlen(str); i++) {
-        if (str[i] >= '0' && str[i] <= '9') continue;
-        return 0;
+        if (str[i] < '0' || str[i] > '9') return 0;
     }
     return 1;
 }

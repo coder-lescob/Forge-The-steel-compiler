@@ -7,8 +7,9 @@
 AST_Node *CreateAST_Node(NodeType type) {
     // allocates, don't forget to free it
     AST_Node *node = malloc(sizeof(AST_Node));
-    if (!node) return NULL;
+    if (node == NULL) return NULL;
     
+    node->error      = ERROR_NULL;
     node->type       = type;
     node->num_tokens = 0;
     node->tokens     = NULL;
@@ -18,8 +19,18 @@ AST_Node *CreateAST_Node(NodeType type) {
     return node;
 }
 
+AST_Node *CreateErrorAST_Node(Error error, NodeType type) {
+    AST_Node *node = CreateAST_Node(type);
+    if (node == NULL) return NULL;
+
+    // set erropr state
+    node->error = error;
+
+    return node;
+}
+
 void FreeAST(AST ast) {
-    if (!ast) return /* was last node */ ;
+    if (!ast) return /* was a leaf node */ ;
 
     // free all ast ressources
     for (size_t i = 0; i < ast->numnodes; i++) {
@@ -36,31 +47,26 @@ void FreeAST(AST ast) {
     free(ast);
 }
 
-ParsingResult CreateParsingResult(NodeType type) {
-    return (ParsingResult) {
-        .error = ERROR_NULL,
-        .ast   = CreateAST_Node(type),
-    };
-}
-
 static Token *next_token(Token **previous_token) {
-    Token *next_token = (*previous_token)++;
+    Token *next_token = *previous_token;
 
     if (next_token->type == TOKEN_EOF) {
         // ouf parsing done
         return NULL;
     }
+    
+    (*previous_token)++;
 
     return next_token;
 }
 
-void PushNode(ParsingResult *result, ParsingResult *node) {
+void PushNode(AST_Node *result, AST_Node *node) {
     if (result->error != ERROR_NULL || result == NULL || node == NULL) {
         return;
     }
 
     // reallocate the node
-    AST_Node **new_nodes = realloc(result->ast->nextnodes, sizeof(AST_Node *) * (result->ast->numnodes + 1));
+    AST_Node **new_nodes = realloc(result->nextnodes, sizeof(AST_Node *) * (result->numnodes + 1));
     if (new_nodes == NULL) {
         // allocation failed
         // set the error state to ALLOCATION_FAILED
@@ -78,17 +84,17 @@ void PushNode(ParsingResult *result, ParsingResult *node) {
 
     // allocation sucessful
     // replace the old nodes with the new ones
-    result->ast->nextnodes = new_nodes;
-    result->ast->numnodes++;
+    result->nextnodes = new_nodes;
+    result->numnodes++;
 
     // put the next node at the end
     /**
      * @note the node MUST be stored on the heap to avoid data corruption
      */
-    result->ast->nextnodes[result->ast->numnodes - 1] = node->ast;
+    result->nextnodes[result->numnodes - 1] = node;
 }
 
-void PushToken(ParsingResult *result, Token **tokens, TokenType *allowed_types) {
+void PushToken(AST_Node *result, Token **tokens, TokenType *allowed_types) {
     if (result == NULL || result->error != ERROR_NULL) {
         return;
     }
@@ -96,6 +102,7 @@ void PushToken(ParsingResult *result, Token **tokens, TokenType *allowed_types) 
     Token *token = next_token(tokens);
 
     if (token == NULL) {
+        result->error = ERROR_UNEXPECTED_EOF;
         return;
     }
 
@@ -115,25 +122,28 @@ void PushToken(ParsingResult *result, Token **tokens, TokenType *allowed_types) 
         }
     }
 
-    Token *new_tokens = realloc(result->ast->tokens, sizeof(Token) * (result->ast->num_tokens + 1));
+    Token *new_tokens = realloc(result->tokens, sizeof(Token) * (result->num_tokens + 1));
     if (new_tokens == NULL) {
         // allocation failed
         result->error = ERROR_ALLOCATION_FAILED;
         return;
     }
 
-    result->ast->tokens = new_tokens;
-    result->ast->num_tokens++;
-    memcpy(&result->ast->tokens[result->ast->num_tokens - 1], token, sizeof(Token));
+    result->tokens = new_tokens;
+    result->num_tokens++;
+    memcpy(&result->tokens[result->num_tokens - 1], token, sizeof(Token));
 }
 
-ParsingResult TryParse(ParsingResult (*F)(Token **), Token **tokens) {
+#define CHECK_NODE_ERROR(NODE) \
+    if ((NODE)->error != ERROR_NULL) return (NODE);
+
+AST_Node *TryParse(AST_Node *(*F)(Token **), Token **tokens) {
     // try to parse with F
     Token *error_tokens = *tokens;
-    ParsingResult result = F(&error_tokens);
+    AST_Node *result = F(&error_tokens);
 
     // If there is no error then update the token pointer
-    if (result.error == ERROR_NULL) {
+    if (result->error == ERROR_NULL) {
         *tokens = error_tokens;
     }
 
@@ -141,7 +151,7 @@ ParsingResult TryParse(ParsingResult (*F)(Token **), Token **tokens) {
 }
 
 // parses a list of token
-ParsingResult Parse(Token *tokens) {
+AST_Node *Parse(Token *tokens) {
     return ParseExpression(&tokens, 0.0f);
 }
 
@@ -153,75 +163,75 @@ static TokenType binary_operators[] = {
     0,
 };
 
-ParsingResult ParseNumber(Token **token) {
+AST_Node *ParseNumber(Token **token) {
     // for now let just say we want a number token
-    ParsingResult result = CreateParsingResult(NODE_NUMBER);
-    TokenType allowed_types[] = {
-        TOKEN_NUMBER,
-        0,
-    };
-    PushToken(&result, token, allowed_types);
+    AST_Node *result = CreateAST_Node(NODE_NUMBER);
+
+    TokenType allowed_types[] = {TOKEN_NUMBER, 0,};
+    PushToken(result, token, allowed_types);
 
     return result;
 }
 
 // implemented as derivation of pratt parsing
-ParsingResult ParseExpression(Token **token, float min_binding_power) {
+AST_Node *ParseExpression(Token **token, float min_binding_power) {
 
     // parse the first number of the expression
-    ParsingResult lhs = TryParse(ParseNumber, token);
+    AST_Node *lhs = TryParse(ParseNumber, token);
 
-    if (lhs.error != ERROR_NULL) {
+    if (lhs->error != ERROR_NULL) {
         // then lhs is not a number
         // so we don't need it
-        FreeAST(lhs.ast);
-        lhs.ast = NULL;
+        FreeAST(lhs);
+        lhs = NULL;
 
         Token *tok = next_token(token);
         if (tok == NULL) {
-            return CreateParsingResult(NODE_NULL);
+            return CreateErrorAST_Node(ERROR_UNEXPECTED_EOF, NODE_ERROR);
         }
 
         if (tok->type == TOKEN_OPEN_PARENTHESES) {
             lhs = ParseExpression(token, 0.0);
 
-            if (lhs.error != ERROR_NULL) {
+            if (lhs->error != ERROR_NULL) {
                 return lhs;
             }
 
             Token *close_parentheses = next_token(token);
-            if (close_parentheses->type != TOKEN_CLOSE_PARENTHESES) {
+            if (close_parentheses == NULL || close_parentheses->type != TOKEN_CLOSE_PARENTHESES) {
                 // Oh, oh missing close parentheses
                 // free the old result
-                FreeAST(lhs.ast);
-                lhs.ast = NULL;
+                FreeAST(lhs);
+                lhs = NULL;
 
-                lhs = CreateParsingResult(NODE_MISSING_CLOSE_PARENTHESES);
-                lhs.error = ERROR_SYNTAX;
+                lhs = CreateErrorAST_Node(ERROR_MISSING_CLOSE_PARENTHESES, NODE_ERROR);
                 
                 TokenType all[] = {0};
-                PushToken(&lhs, token, all);
+                PushToken(lhs, token, all);
+
+                return lhs;
             }
         }
         else {
             // Oh, oh unknown suffix operator
             // free the old result
-            FreeAST(lhs.ast);
-            lhs.ast = NULL;
+            FreeAST(lhs);
+            lhs = NULL;
 
-            lhs = CreateParsingResult(NODE_UNKNOWN_SUFFIX_OP);
-            lhs.error = ERROR_SYNTAX;
+            lhs = CreateErrorAST_Node(ERROR_UNKNOWN_SUFFIX_OP, NODE_ERROR);
             
             TokenType all[] = {0};
-            PushToken(&lhs, token, all);
+            PushToken(lhs, token, all);
+
+            return lhs;
         }
     }
 
-    while ((**token).type != TOKEN_EOF) {
+    while (*token != NULL && (*token)->type != TOKEN_EOF) {
         // peek the operator token
         Token *op = *token;
 
-        if (op->type == TOKEN_EOF || op->type == TOKEN_CLOSE_PARENTHESES) {
+        if (op == NULL || op->type == TOKEN_EOF || op->type == TOKEN_CLOSE_PARENTHESES) {
             break;
         }
 
@@ -233,14 +243,15 @@ ParsingResult ParseExpression(Token **token, float min_binding_power) {
         }
         
         // push the operator in an operaton
-        ParsingResult operation = CreateParsingResult(NODE_BINARY_OPERATION);
-        PushToken(&operation, token, binary_operators);
+        AST_Node *operation = CreateAST_Node(NODE_BINARY_OPERATION);
+        PushToken(operation, token, binary_operators);
         
-        ParsingResult rhs = ParseExpression(token, binding_power.rhs);
-        PushNode(&operation, &lhs);
-        PushNode(&operation, &rhs);
+        AST_Node *rhs = ParseExpression(token, binding_power.rhs);
+        PushNode(operation, lhs);
+        PushNode(operation, rhs);
 
         lhs = operation;
+        CHECK_NODE_ERROR(lhs);
     }
 
     return lhs;
@@ -257,6 +268,6 @@ BindingPower GetBindingPower(Token *op) {
             return (BindingPower) { 2.0f, 2.1f };
 
         default: 
-            return (BindingPower) { 0.0f, 0.0f };
+            return (BindingPower) { 99.0f, 99.0f };
     }
 }
