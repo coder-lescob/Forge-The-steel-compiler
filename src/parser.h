@@ -3,6 +3,7 @@
 
 // std libs
 #include <stdlib.h>
+#include <stdbool.h>
 
 // project
 #include "error.h"
@@ -45,7 +46,7 @@ typedef AST_Node *AST;
  */
 typedef struct {
     float lhs, rhs;
-} BindingPower;
+} BinaryBindingPower;
 
 /**
  * allocates an AST_Node on the heap don't forget to free it.
@@ -66,6 +67,15 @@ AST_Node *CreateAST_Node(NodeType type);
  * @note all pointers fields are initialized to NULL
  */
 AST_Node *CreateErrorAST_Node(Error error, NodeType type);
+
+/**
+ * frees the node with FreeAST and then create a new node
+ * with the new error and new_type
+ * @param node the node
+ * @param new_error the new error
+ * @param new_type the new node type
+ */
+void RecycleAST_Node(AST_Node **node, Error new_error, NodeType new_type);
 
 /**
  * Frees the ast given.
@@ -120,11 +130,16 @@ AST_Node *ParseNumber(Token **token);
 AST_Node *ParseExpression(Token **token, float min_binding_power);
 
 /**
- * get the binding power of op
+ * returns true if and only if op is an operator. e.g. "+", "-"...
+ */
+bool IsOperator(Token *op);
+
+/**
+ * get the binary binding power (act on two operands) of op
  * @param op the token operator
  * 
  * @note if op isn't an operator (0, 0) is returned
  */
-BindingPower GetBindingPower(Token *op);
+BinaryBindingPower GetBinaryBindingPower(Token *op);
 
 #endif

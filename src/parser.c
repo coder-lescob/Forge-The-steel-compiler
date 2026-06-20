@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "debug.h"
 
 #include <string.h>
 #include <stdbool.h>
@@ -27,6 +28,13 @@ AST_Node *CreateErrorAST_Node(Error error, NodeType type) {
     node->error = error;
 
     return node;
+}
+
+void RecycleAST_Node(AST_Node **node, Error new_error, NodeType new_type) {
+    FreeAST(*node);
+
+    // create the new node
+    *node = CreateErrorAST_Node(new_error, new_type);
 }
 
 void FreeAST(AST ast) {
@@ -95,7 +103,7 @@ void PushNode(AST_Node *result, AST_Node *node) {
 }
 
 void PushToken(AST_Node *result, Token **tokens, TokenType *allowed_types) {
-    if (result == NULL || result->error != ERROR_NULL) {
+    if (result == NULL) {
         return;
     }
 
@@ -108,7 +116,8 @@ void PushToken(AST_Node *result, Token **tokens, TokenType *allowed_types) {
 
     if (allowed_types != NULL) {
         // verify that the token is allowed
-        bool valid = false;
+        // the empty allowed types means that all types are allowed
+        bool valid = (*allowed_types) == 0;
         for (TokenType *type = allowed_types; (*type) != 0; type++) {
             if (token->type == *type) {
                 valid = true;
@@ -180,63 +189,51 @@ AST_Node *ParseExpression(Token **token, float min_binding_power) {
     AST_Node *lhs = TryParse(ParseNumber, token);
 
     if (lhs->error != ERROR_NULL) {
-        // then lhs is not a number
-        // so we don't need it
-        FreeAST(lhs);
-        lhs = NULL;
 
         Token *tok = next_token(token);
         if (tok == NULL) {
-            return CreateErrorAST_Node(ERROR_UNEXPECTED_EOF, NODE_ERROR);
+            RecycleAST_Node(&lhs, ERROR_UNEXPECTED_EOF, NODE_ERROR);
+            return lhs;
         }
 
         if (tok->type == TOKEN_OPEN_PARENTHESES) {
+            // parse the inside
             lhs = ParseExpression(token, 0.0);
 
-            if (lhs->error != ERROR_NULL) {
-                return lhs;
-            }
-
+            // verify if the last one was closing parentheses
             Token *close_parentheses = next_token(token);
             if (close_parentheses == NULL || close_parentheses->type != TOKEN_CLOSE_PARENTHESES) {
                 // Oh, oh missing close parentheses
-                // free the old result
-                FreeAST(lhs);
-                lhs = NULL;
+                AST_Node *rhs = CreateErrorAST_Node(ERROR_MISSING_CLOSE_PARENTHESES, NODE_ERROR);
 
-                lhs = CreateErrorAST_Node(ERROR_MISSING_CLOSE_PARENTHESES, NODE_ERROR);
-                
                 TokenType all[] = {0};
-                PushToken(lhs, token, all);
-
-                return lhs;
+                PushToken(rhs, (close_parentheses != NULL)? &close_parentheses : token, all);
+                PushNode(lhs, rhs);
             }
         }
         else {
-            // Oh, oh unknown suffix operator
-            // free the old result
-            FreeAST(lhs);
-            lhs = NULL;
+            // Oh, oh I expected an number or an identifier
+            // create an error
+            RecycleAST_Node(&lhs, ERROR_EXPECTED_NUMBER_ID, NODE_ERROR);
 
-            lhs = CreateErrorAST_Node(ERROR_EXPECTED_NUMBER_ID, NODE_ERROR);
-            
             TokenType all[] = {0};
-            PushToken(lhs, token, all);
-
-            return lhs;
+            PushToken(lhs, &tok, all);
         }
+        
+        // If an error accured, return
+        CHECK_NODE_ERROR(lhs);
     }
 
     while (*token != NULL && (*token)->type != TOKEN_EOF) {
         // peek the operator token
         Token *op = *token;
 
-        if (op == NULL || op->type == TOKEN_EOF || op->type == TOKEN_CLOSE_PARENTHESES) {
+        if (op == NULL || !IsOperator(op)) {
             break;
         }
 
         // get the binding power of the operator
-        BindingPower binding_power = GetBindingPower(op);
+        BinaryBindingPower binding_power = GetBinaryBindingPower(op);
 
         if (binding_power.lhs < min_binding_power) {
             break;
@@ -257,17 +254,30 @@ AST_Node *ParseExpression(Token **token, float min_binding_power) {
     return lhs;
 }
 
-BindingPower GetBindingPower(Token *op) {
+bool IsOperator(Token *op) {
+    switch (op->type) {
+        case TOKEN_PLUS: 
+        case TOKEN_MINUS:
+        case TOKEN_STAR:
+        case TOKEN_SLASH:
+            return true;
+
+        default: 
+            return false;
+    }
+}
+
+BinaryBindingPower GetBinaryBindingPower(Token *op) {
     switch (op->type) {
         case TOKEN_PLUS: 
         case TOKEN_MINUS: 
-            return (BindingPower) { 1.0f, 1.1f };
+            return (BinaryBindingPower) { 1.0f, 1.1f };
 
         case TOKEN_STAR:
         case TOKEN_SLASH:
-            return (BindingPower) { 2.0f, 2.1f };
+            return (BinaryBindingPower) { 2.0f, 2.1f };
 
         default: 
-            return (BindingPower) { 99.0f, 99.0f };
+            return (BinaryBindingPower) { 99.0f, 99.0f };
     }
 }
