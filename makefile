@@ -10,7 +10,7 @@ MAKEFLAGS += --no-print-directory
 CC       := gcc
 ASM      := nasm
 OBJFLAGS := -c -g -Wall -Wextra -Wpedantic -I$(SRC)
-CFLAGS   := -Wall -Wextra -Wpedantic -g #-fsanitize=address
+CFLAGS   := -Wall -Wextra -Wpedantic -g -fsanitize=address
 ASFLAGS  := -felf64
 
 SRC_C := $(wildcard $(SRC)/*.c)

@@ -234,8 +234,11 @@ AST_Node *ParseExpression(Token **token, float min_binding_power) {
 
         if (!IsOperator(op)) {
             Token *num = op + 1;
+            AST number = ParseNumber(&num);
+            Error err  = number->error;
+            FreeAST(number);
             if (num->type != TOKEN_CLOSE_PARENTHESES 
-                && ParseNumber(&num)->error != ERROR_NULL) {
+                && err != ERROR_NULL) {
                 break;
             }
         }
