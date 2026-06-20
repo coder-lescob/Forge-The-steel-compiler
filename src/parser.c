@@ -263,6 +263,10 @@ AST_Node *ParseExpression(Token **token, float min_binding_power) {
 }
 
 bool IsOperator(Token *op) {
+    if (op == NULL) {
+        return false;
+    }
+
     switch (op->type) {
         case TOKEN_PLUS: 
         case TOKEN_MINUS:
@@ -276,6 +280,10 @@ bool IsOperator(Token *op) {
 }
 
 BinaryBindingPower GetBinaryBindingPower(Token *op) {
+    if (op == NULL) {
+        return (BinaryBindingPower) { 99.0f, 99.0f };
+    }
+
     switch (op->type) {
         case TOKEN_PLUS: 
         case TOKEN_MINUS: 
