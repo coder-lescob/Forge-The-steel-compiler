@@ -212,7 +212,7 @@ AST_Node *ParseExpression(Token **token, float min_binding_power) {
             }
         }
         else {
-            // Oh, oh I expected an number or an identifier
+            // Oh, oh I expected a number or an identifier
             // create an error
             RecycleAST_Node(&lhs, ERROR_EXPECTED_NUMBER_ID, NODE_ERROR);
 
@@ -228,8 +228,16 @@ AST_Node *ParseExpression(Token **token, float min_binding_power) {
         // peek the operator token
         Token *op = *token;
 
-        if (op == NULL || !IsOperator(op)) {
+        if (op == NULL || op->type == TOKEN_EOF) {
             break;
+        }
+
+        if (!IsOperator(op)) {
+            Token *num = op + 1;
+            if (num->type != TOKEN_CLOSE_PARENTHESES 
+                && ParseNumber(&num)->error != ERROR_NULL) {
+                break;
+            }
         }
 
         // get the binding power of the operator
