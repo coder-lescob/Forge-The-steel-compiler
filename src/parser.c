@@ -69,7 +69,7 @@ static Token *next_token(Token **previous_token) {
 }
 
 void PushNode(AST_Node *result, AST_Node *node) {
-    if (result->error != ERROR_NULL || result == NULL || node == NULL) {
+    if (result == NULL || node == NULL) {
         return;
     }
 
@@ -198,6 +198,7 @@ AST_Node *ParseExpression(Token **token, float min_binding_power) {
 
         if (tok->type == TOKEN_OPEN_PARENTHESES) {
             // parse the inside
+            FreeAST(lhs);
             lhs = ParseExpression(token, 0.0);
 
             // verify if the last one was closing parentheses
